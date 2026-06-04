@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lecture LGB+</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:    #2563eb; --blue-lt: #dbeafe;
+      --green:   #16a34a; --red: #dc2626; --orange: #ea580c;
+      --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+      --gray-400: #94a3b8; --gray-700: #334155; --gray-900: #0f172a;
+      --radius: 10px; --shadow: 0 2px 12px rgba(0,0,0,.08);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50); color: var(--gray-900);
+      min-height: 100vh; padding: 16px;
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
+    label { font-size: .85rem; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 4px; }
+    input[type=text], select, textarea {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      font-size: .95rem; background: #fff; transition: border-color .15s;
+    }
+    input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
+    textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.6; }
+    .app { max-width: 780px; margin: 0 auto; }
+    header {
+      background: var(--blue); color: #fff;
+      border-radius: var(--radius); padding: 16px 20px;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+    }
+    .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 500px) { .row-2 { grid-template-columns: 1fr; } }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      border: none; transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--blue);  color: #fff; }
+    .btn-danger  { background: var(--red);   color: #fff; }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-outline { background: #fff; color: var(--blue); border: 1.5px solid var(--blue); }
+    .btn-gray    { background: var(--gray-200); color: var(--gray-700); }
+    .btn-group   { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .rec-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fee2e2; color: var(--red);
+      border-radius: 999px; padding: 4px 12px; font-size: .82rem; font-weight: 700;
+    }
+    .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    #reading-area {
+      font-size: 1.25rem; line-height: 2.2; padding: 16px;
+      background: var(--gray-50); border-radius: var(--radius);
+      border: 1.5px solid var(--gray-200); min-height: 120px;
+    }
+    .word { display: inline; padding: 1px 3px; border-radius: 4px; cursor: default; transition: background .15s; }
+    .word-correct  { background: transparent; }
+    .word-error    { background: #fecaca; color: var(--red); font-weight: 700; text-decoration: underline wavy var(--red); }
+    .word-omission { background: #fed7aa; color: var(--orange); text-decoration: line-through; }
+    #live-transcript {
+      font-size: .9rem; color: var(--gray-700); background: var(--gray-100);
+      border-radius: var(--radius); padding: 10px 14px; min-height: 42px;
+      margin-top: 12px; border: 1px dashed var(--gray-400); font-style: italic;
+    }
+    .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .stat-box {
+      flex: 1; min-width: 110px; background: var(--gray-50);
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      padding: 12px; text-align: center;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; }
+    .stat-lbl { font-size: .75rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: .04em; }
+    .stat-num.good { color: var(--green); }
+    .stat-num.warn { color: var(--orange); }
+    .stat-num.bad  { color: var(--red); }
+    .error-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 12px; border-radius: 8px;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      margin-bottom: 6px; font-size: .9rem;
+    }
+    .error-type { font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+    .error-type.sub { color: var(--red); }
+    .error-type.om  { color: var(--orange); }
+    .copy-box {
+      background: var(--gray-100); border-radius: var(--radius);
+      padding: 14px; margin-top: 14px; font-size: .85rem;
+    }
+    .copy-box h3 { font-size: .9rem; font-weight: 700; margin-bottom: 8px; }
+    #copy-status { font-size: .85rem; color: var(--green); font-weight: 600; margin-top: 6px; min-height: 20px; }
+    .hidden { display: none !important; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 2px solid var(--gray-200); }
+    .tab {
+      padding: 8px 16px; cursor: pointer; font-size: .9rem; font-weight: 600;
+      border-radius: var(--radius) var(--radius) 0 0;
+      color: var(--gray-400); background: none; border: none;
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s;
+    }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel.hidden { display: none; }
+    .notice { background: var(--blue-lt); border-radius: var(--radius); padding: 10px 14px; font-size: .85rem; color: #1e40af; margin-bottom: 12px; }
+    .notice.warn { background: #fff7ed; color: #9a3412; }
+
+    @media print {
+      header, #step-setup, #step-recording, .btn-group, .copy-box { display: none !important; }
+      #step-report { display: block !important; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+    <div>
+      <h1>Outil de lecture enregistrée</h1>
+      <div style="font-size:.8rem;opacity:.85">LGB Primaire — Évaluation de la lecture orale</div>
+    </div>
+  </header>
+
+  <!-- ÉTAPE 1 : Paramètres -->
+  <div id="step-setup" class="card">
+    <h2>1 · Paramètres</h2>
+    <div class="row-2">
+      <div>
+        <label>Langue / Language</label>
+        <select id="lang-select">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div>
+        <label>Niveau</label>
+        <select id="level-select">
+          <option>1A</option><option>1B</option>
+          <option>2A</option><option>2B</option>
+          <option>3A</option><option>3B</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label>Élève</label>
+      <input type="text" id="student-name" placeholder="Prénom Nom">
+    </div>
+    <div style="margin-top:16px">
+      <div class="tabs">
+        <button class="tab active" data-tab="library">Bibliothèque de textes</button>
+        <button class="tab" data-tab="custom">Texte libre</button>
+      </div>
+      <div id="tab-library" class="tab-panel">
+        <label>Choisir un texte</label>
+        <select id="text-select"></select>
+        <div id="text-preview" style="margin-top:10px;font-size:.9rem;color:var(--gray-700);line-height:1.6;padding:10px;background:var(--gray-100);border-radius:8px;min-height:60px"></div>
+      </div>
+      <div id="tab-custom" class="tab-panel hidden">
+        <label>Titre du texte</label>
+        <input type="text" id="custom-title" placeholder="Ex: La grenouille et le bœuf" style="margin-bottom:10px">
+        <label>Texte à lire</label>
+        <textarea id="custom-text" placeholder="Collez ou tapez le texte ici…"></textarea>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btn-start-session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Commencer la séance
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Lecture -->
+  <div id="step-recording" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <h2 style="margin:0">2 · Lecture</h2>
+      <span id="rec-badge" class="rec-badge hidden">
+        <span class="rec-dot"></span> Enregistrement
+      </span>
+    </div>
+    <div id="compat-notice" class="notice hidden warn"></div>
+    <div style="font-size:.85rem;color:var(--gray-400);margin-bottom:8px" id="session-info"></div>
+    <div id="reading-area"></div>
+    <div id="live-transcript">En attente du microphone…</div>
+    <div class="btn-group">
+      <button class="btn btn-danger" id="btn-record">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+        Démarrer l'enregistrement
+      </button>
+      <button class="btn btn-gray" id="btn-stop-record" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        Arrêter
+      </button>
+      <button class="btn btn-outline" id="btn-reset-session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9 9 0 00-9 9"/><path d="M3 3v4h4"/></svg>
+        Recommencer
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Rapport -->
+  <div id="step-report" class="card hidden">
+    <h2>3 · Rapport de lecture</h2>
+    <div id="report-header" style="font-size:.9rem;color:var(--gray-700);margin-bottom:14px"></div>
+
+    <div class="stats">
+      <div class="stat-box"><div class="stat-num" id="stat-total">—</div><div class="stat-lbl">Mots total</div></div>
+      <div class="stat-box"><div class="stat-num bad" id="stat-errors">—</div><div class="stat-lbl">Erreurs</div></div>
+      <div class="stat-box"><div class="stat-num" id="stat-accuracy">—</div><div class="stat-lbl">Précision</div></div>
+      <div class="stat-box"><div class="stat-num warn" id="stat-sub">—</div><div class="stat-lbl">Substitutions</div></div>
+      <div class="stat-box"><div class="stat-num warn" id="stat-om">—</div><div class="stat-lbl">Omissions</div></div>
+    </div>
+
+    <div style="margin-bottom:8px;font-size:.85rem;font-weight:600">Texte annoté :</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px">
+      <span><span style="background:#fecaca;padding:1px 6px;border-radius:4px">mot</span> Substitution</span>
+      <span><span style="background:#fed7aa;padding:1px 6px;border-radius:4px;text-decoration:line-through">mot</span> Omission</span>
+    </div>
+    <div id="report-text" style="font-size:1.15rem;line-height:2.2;padding:16px;background:var(--gray-50);border-radius:var(--radius);border:1.5px solid var(--gray-200)"></div>
+
+    <div style="margin-top:14px">
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">Détail des erreurs :</div>
+      <div id="error-list"></div>
+    </div>
+
+    <!-- Copier le rapport -->
+    <div class="copy-box">
+      <h3>📋 Copier le rapport</h3>
+      <p style="color:var(--gray-700);margin-bottom:10px;font-size:.85rem">Copiez le résumé pour le coller dans un email, Google Docs ou Google Sheets.</p>
+      <button class="btn btn-success" id="btn-copy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copier le rapport
+      </button>
+      <div id="copy-status"></div>
+    </div>
+
+    <div class="btn-group" style="margin-top:16px">
+      <button class="btn btn-primary" id="btn-new-session">Nouvelle séance</button>
+      <button class="btn btn-outline" id="btn-retry">Réessayer le même texte</button>
+      <button class="btn btn-gray" id="btn-print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer / PDF
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Bibliothèque de textes ───────────────────────────────────
+const LIBRARY = [
+  { id:'fr_1a', lang:'fr', level:'1A', title:'Le chat et la souris',
+    text:'Le chat dort sur le tapis. La petite souris sort de son trou. Elle regarde le chat. Le chat ouvre un œil. La souris court très vite et se cache.' },
+  { id:'fr_1b', lang:'fr', level:'1B', title:'La pluie',
+    text:"Il pleut aujourd'hui. Les enfants restent à la maison. Maman fait un gâteau au chocolat. Papa lit son journal. Le chien dort devant la cheminée. Tout le monde est bien au chaud." },
+  { id:'fr_2a', lang:'fr', level:'2A', title:'Une journée à la ferme',
+    text:"Ce matin, Léa visite la ferme de son oncle. Elle voit des poules, des vaches et deux chevaux. Son oncle lui montre comment traire une vache. Le lait est encore chaud. Léa aime beaucoup la ferme. Elle voudrait y revenir bientôt." },
+  { id:'fr_2b', lang:'fr', level:'2B', title:"L'automne dans le parc",
+    text:"En automne, les feuilles des arbres changent de couleur. Elles deviennent jaunes, oranges et rouges. Le vent les emporte dans les airs. Les enfants adorent marcher dessus et entendre le bruit qu'elles font. Les écureuils ramassent des noisettes pour l'hiver. La nature se prépare au repos." },
+  { id:'fr_3a', lang:'fr', level:'3A', title:'Le voyage de Marco',
+    text:"Marco rêve de voyager autour du monde depuis qu'il est tout petit. Un jour, son père lui offre un atlas. Chaque soir, Marco l'ouvre et choisit un pays imaginaire. Il s'invente des aventures extraordinaires dans des jungles mystérieuses, sur des mers agitées ou dans des déserts brûlants. Ses rêves sont son plus beau voyage." },
+  { id:'fr_3b', lang:'fr', level:'3B', title:'Les planètes',
+    text:"Notre système solaire est composé de huit planètes qui tournent autour du Soleil. La Terre est la seule planète où l'on connaît la présence de la vie. Jupiter est la plus grande des planètes : elle est si immense qu'on pourrait y faire tenir mille Terres. Saturne est célèbre pour ses magnifiques anneaux composés de glace et de roches." },
+  { id:'en_1a', lang:'en', level:'1A', title:'My dog',
+    text:'I have a dog. His name is Max. Max is brown and white. He likes to run and play. He eats from a big red bowl. Max sleeps next to my bed. I love my dog.' },
+  { id:'en_1b', lang:'en', level:'1B', title:'The garden',
+    text:'There is a big garden behind our house. Mum grows carrots, tomatoes and beans. Dad cuts the grass every Saturday. My little sister waters the flowers. We also have an apple tree. In autumn, we make apple pie together.' },
+  { id:'en_2a', lang:'en', level:'2A', title:'A rainy afternoon',
+    text:'It was a rainy afternoon. Tom could not play outside. He sat by the window and watched the drops run down the glass. His mother suggested reading a book. Tom chose a story about a young explorer. He read for two hours and forgot all about the rain.' },
+  { id:'en_2b', lang:'en', level:'2B', title:'The ocean',
+    text:'The ocean covers more than half of our planet. It is home to millions of animals, from tiny fish to the enormous blue whale. Coral reefs are like underwater cities full of colour and life. Sadly, pollution and rising temperatures are damaging these fragile ecosystems. We must protect our oceans for future generations.' },
+  { id:'en_3a', lang:'en', level:'3A', title:'A trip to the museum',
+    text:'Last week, our class visited the Natural History Museum. We saw dinosaur skeletons that were millions of years old. A guide explained how scientists discover fossils buried deep underground. My favourite exhibit was a model of a T-Rex that moved its head. I learnt so much and I want to become a palaeontologist one day.' },
+  { id:'en_3b', lang:'en', level:'3B', title:'The invention of the printing press',
+    text:'Before the printing press was invented, books had to be copied by hand, which took months or even years. In the fifteenth century, Johannes Gutenberg developed a machine that could print pages quickly using moveable metal letters. This invention transformed the world: knowledge could be shared widely for the first time. Books became cheaper, and more people learned to read.' }
+];
+
+// ── État ─────────────────────────────────────────────────────
+let state = {
+  lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
+  words:[], rawWords:[], recognition:null, isRecording:false,
+  fullTranscript:'', errors:[]
+};
+
+// ── Init ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  refreshTextSelect();
+  bindTabs();
+  bindSetup();
+  checkSpeechSupport();
+});
+
+function refreshTextSelect() {
+  const sel = document.getElementById('text-select');
+  const lang = document.getElementById('lang-select').value;
+  sel.innerHTML = '';
+  LIBRARY.filter(t => t.lang === lang).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = `[${t.level}] ${t.title}`;
+    sel.appendChild(opt);
+  });
+  updatePreview();
+}
+
+function updatePreview() {
+  const item = LIBRARY.find(t => t.id === document.getElementById('text-select').value);
+  document.getElementById('text-preview').textContent = item ? item.text : '';
+}
+
+// ── Onglets ──────────────────────────────────────────────────
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-' + tab.dataset.tab).classList.remove('hidden');
+    });
+  });
+  document.getElementById('text-select').addEventListener('change', updatePreview);
+  document.getElementById('lang-select').addEventListener('change', refreshTextSelect);
+}
+
+// ── Boutons ──────────────────────────────────────────────────
+function bindSetup() {
+  document.getElementById('btn-start-session').addEventListener('click', startSession);
+  document.getElementById('btn-record').addEventListener('click', startRecording);
+  document.getElementById('btn-stop-record').addEventListener('click', stopRecording);
+  document.getElementById('btn-reset-session').addEventListener('click', resetToRecording);
+  document.getElementById('btn-copy').addEventListener('click', copyReport);
+  document.getElementById('btn-new-session').addEventListener('click', newSession);
+  document.getElementById('btn-retry').addEventListener('click', retrySession);
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+}
+
+// ── Compatibilité micro ───────────────────────────────────────
+function checkSpeechSupport() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    const n = document.getElementById('compat-notice');
+    n.classList.remove('hidden');
+    n.innerHTML = '⚠️ Reconnaissance vocale non disponible sur ce navigateur. Utilisez <strong>Chrome</strong> ou <strong>Edge</strong>.';
+  }
+}
+
+// ── Démarrer séance ──────────────────────────────────────────
+function startSession() {
+  state.lang    = document.getElementById('lang-select').value;
+  state.level   = document.getElementById('level-select').value;
+  state.student = document.getElementById('student-name').value.trim();
+
+  const isLib = document.querySelector('.tab.active').dataset.tab === 'library';
+  if (isLib) {
+    const item = LIBRARY.find(t => t.id === document.getElementById('text-select').value);
+    if (!item) { alert('Veuillez choisir un texte.'); return; }
+    state.textTitle = item.title;
+    state.originalText = item.text;
+  } else {
+    state.originalText = document.getElementById('custom-text').value.trim();
+    state.textTitle = document.getElementById('custom-title').value.trim() || 'Texte personnalisé';
+    if (!state.originalText) { alert('Veuillez saisir un texte.'); return; }
+  }
+
+  state.rawWords = state.originalText.split(/\s+/).filter(Boolean);
+  state.words    = state.rawWords.map(normalise);
+  resetToRecording();
+  show('step-recording');
+  hide('step-setup');
+  document.getElementById('session-info').textContent =
+    `${state.student ? state.student + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+}
+
+// ── Enregistrement ───────────────────────────────────────────
+function resetToRecording() {
+  state.fullTranscript = ''; state.errors = [];
+  renderWords([]);
+  document.getElementById('live-transcript').textContent = 'En attente du microphone…';
+  document.getElementById('rec-badge').classList.add('hidden');
+  document.getElementById('btn-record').disabled   = false;
+  document.getElementById('btn-stop-record').disabled = true;
+  hide('step-report');
+}
+
+function startRecording() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('live-transcript').textContent = '(Mode manuel — reconnaisance vocale non disponible)';
+    state.isRecording = true;
+    document.getElementById('btn-record').disabled = true;
+    document.getElementById('btn-stop-record').disabled = false;
+    document.getElementById('rec-badge').classList.remove('hidden');
+    return;
+  }
+  const rec = new SR();
+  rec.lang = state.lang === 'fr' ? 'fr-FR' : 'en-GB';
+  rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+  let interim = '';
+  rec.onresult = e => {
+    interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) { state.fullTranscript += ' ' + t; updateHighlights(); }
+      else { interim = t; }
+    }
+    document.getElementById('live-transcript').textContent =
+      (state.fullTranscript + ' ' + interim).trim() || '…';
+  };
+  rec.onerror = e => {
+    if (e.error !== 'no-speech')
+      document.getElementById('live-transcript').textContent = 'Erreur micro : ' + e.error;
+  };
+  rec.onend = () => { if (state.isRecording) rec.start(); };
+  state.recognition = rec; state.isRecording = true; rec.start();
+  document.getElementById('rec-badge').classList.remove('hidden');
+  document.getElementById('btn-record').disabled = true;
+  document.getElementById('btn-stop-record').disabled = false;
+}
+
+function stopRecording() {
+  state.isRecording = false;
+  if (state.recognition) { state.recognition.stop(); state.recognition = null; }
+  document.getElementById('rec-badge').classList.add('hidden');
+  document.getElementById('btn-record').disabled   = false;
+  document.getElementById('btn-stop-record').disabled = true;
+  buildReport();
+}
+
+// ── Alignement Levenshtein ────────────────────────────────────
+function align(expected, spoken) {
+  const n = expected.length, m = spoken.length;
+  const SUB = 1, DEL = 1, INS = 0.5;
+  const dp = Array.from({length:n+1}, () => new Float32Array(m+1));
+  for (let i=1;i<=n;i++) dp[i][0]=i*DEL;
+  for (let j=1;j<=m;j++) dp[0][j]=j*INS;
+  for (let i=1;i<=n;i++) for (let j=1;j<=m;j++) {
+    const ok = expected[i-1]===spoken[j-1];
+    dp[i][j]=Math.min(dp[i-1][j-1]+(ok?0:SUB), dp[i-1][j]+DEL, dp[i][j-1]+INS);
+  }
+  const ops=[]; let i=n, j=m;
+  while (i>0||j>0) {
+    if (i>0&&j>0) {
+      const ok=expected[i-1]===spoken[j-1];
+      if (dp[i][j]===dp[i-1][j-1]+(ok?0:SUB)) { ops.unshift({type:ok?'ok':'sub',exp:expected[i-1],got:spoken[j-1]}); i--;j--;continue; }
+    }
+    if (i>0&&dp[i][j]===dp[i-1][j]+DEL) { ops.unshift({type:'del',exp:expected[i-1],got:null}); i--; }
+    else { ops.unshift({type:'ins',exp:null,got:spoken[j-1]}); j--; }
+  }
+  return ops;
+}
+
+function updateHighlights() {
+  const ops = align(state.words, state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean));
+  const status = state.words.map(()=>'correct'); let wi=0;
+  for (const op of ops) {
+    if (op.type==='ok')  { status[wi]='correct';  wi++; }
+    else if (op.type==='sub') { status[wi]='error';    wi++; }
+    else if (op.type==='del') { status[wi]='omission'; wi++; }
+  }
+  renderWords(status);
+}
+
+// ── Rapport ──────────────────────────────────────────────────
+function buildReport() {
+  const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
+  const ops = align(state.words, spoken);
+  const status = state.words.map(()=>'correct');
+  state.errors = []; let wi=0;
+  for (const op of ops) {
+    if (op.type==='ok') { wi++; }
+    else if (op.type==='sub') { status[wi]='error';    state.errors.push({index:wi,type:'sub',expected:state.rawWords[wi],got:op.got}); wi++; }
+    else if (op.type==='del') { status[wi]='omission'; state.errors.push({index:wi,type:'om', expected:state.rawWords[wi],got:null});   wi++; }
+  }
+  renderWords(status);
+
+  const total=state.words.length, errCount=state.errors.length;
+  const subs=state.errors.filter(e=>e.type==='sub').length;
+  const oms =state.errors.filter(e=>e.type==='om').length;
+  const acc =total>0?Math.round(((total-errCount)/total)*100):100;
+
+  document.getElementById('stat-total').textContent = total;
+  const se=document.getElementById('stat-errors'); se.textContent=errCount;
+  se.className='stat-num '+(errCount===0?'good':errCount<total*.1?'warn':'bad');
+  const sa=document.getElementById('stat-accuracy'); sa.textContent=acc+'%';
+  sa.className='stat-num '+(acc>=95?'good':acc>=85?'warn':'bad');
+  document.getElementById('stat-sub').textContent=subs;
+  document.getElementById('stat-om').textContent=oms;
+
+  document.getElementById('report-header').textContent =
+    `${state.student ? state.student + ' · ' : ''}${state.lang==='fr'?'Français':'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+
+  document.getElementById('report-text').innerHTML = annotatedHtml(status);
+
+  const list=document.getElementById('error-list'); list.innerHTML='';
+  if (!state.errors.length) {
+    list.innerHTML='<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
+  } else {
+    state.errors.forEach(e => {
+      const d=document.createElement('div'); d.className='error-item';
+      d.innerHTML=`<div><div class="error-type ${e.type==='sub'?'sub':'om'}">${e.type==='sub'?'Substitution':'Omission'}</div><div>Attendu : <strong>${e.expected}</strong> ${e.got?`→ Lu : <em>${e.got}</em>`:'→ <em>non lu</em>'}</div></div>`;
+      list.appendChild(d);
+    });
+  }
+
+  hide('step-recording');
+  show('step-report');
+}
+
+function annotatedHtml(status) {
+  return state.rawWords.map((w,i)=>{
+    if (status[i]==='error')    return `<span class="word word-error">${w}</span> `;
+    if (status[i]==='omission') return `<span class="word word-omission">${w}</span> `;
+    return `<span class="word word-correct">${w}</span> `;
+  }).join('');
+}
+
+function renderWords(status) {
+  const area=document.getElementById('reading-area');
+  area.innerHTML = (!status||!status.length)
+    ? state.rawWords.map(w=>`<span class="word word-correct">${w}</span> `).join('')
+    : annotatedHtml(status);
+}
+
+// ── Copier le rapport ────────────────────────────────────────
+function copyReport() {
+  const total=state.words.length, errCount=state.errors.length;
+  const acc=total>0?Math.round(((total-errCount)/total)*100):100;
+  const date=new Date().toLocaleDateString('fr-CH');
+  const errLines = state.errors.map(e=>
+    `  [${e.type==='sub'?'Substitution':'Omission'}] ${e.expected}${e.got?' → '+e.got:''}`
+  ).join('\n');
+  const annotated = state.rawWords.map((w,i)=>{
+    const e=state.errors.find(e=>e.index===i);
+    return e?(e.type==='sub'?`[${w}→${e.got}]`:`[OMIS:${w}]`):w;
+  }).join(' ');
+
+  const txt =
+`RAPPORT DE LECTURE — LGB Primaire
+Date       : ${date}
+Élève      : ${state.student || '—'}
+Langue     : ${state.lang==='fr'?'Français':'English'}
+Niveau     : ${state.level}
+Texte      : ${state.textTitle}
+
+RÉSULTATS
+Mots total : ${total}
+Erreurs    : ${errCount}
+Précision  : ${acc}%
+Substitut. : ${state.errors.filter(e=>e.type==='sub').length}
+Omissions  : ${state.errors.filter(e=>e.type==='om').length}
+
+DÉTAIL DES ERREURS
+${errLines || '  Aucune erreur'}
+
+TEXTE ANNOTÉ
+${annotated}`;
+
+  navigator.clipboard.writeText(txt).then(() => {
+    document.getElementById('copy-status').textContent = '✓ Copié ! Collez dans Google Docs, Sheets ou un email.';
+    setTimeout(()=>document.getElementById('copy-status').textContent='', 4000);
+  }).catch(()=>{
+    document.getElementById('copy-status').textContent = 'Copiez manuellement ci-dessus.';
+  });
+}
+
+// ── Navigation ───────────────────────────────────────────────
+function newSession()   { hide('step-report'); hide('step-recording'); show('step-setup'); }
+function retrySession() { resetToRecording(); hide('step-report'); show('step-recording'); }
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+function normalise(w) {
+  return w.toLowerCase().replace(/['']/g,"'").replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi,'').trim();
+}
+</script>
+</body>
+</html>
