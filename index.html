@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -63,7 +64,7 @@
       background: var(--gray-50); border-radius: var(--radius);
       border: 1.5px solid var(--gray-200); min-height: 120px;
     }
-    .word { display: inline; padding: 1px 3px; border-radius: 4px; cursor: default; transition: background .15s; }
+    .word { display: inline; padding: 2px 4px; border-radius: 4px; }
     .word-correct  { background: transparent; }
     .word-error    { background: #fecaca; color: var(--red); font-weight: 700; text-decoration: underline wavy var(--red); }
     .word-omission { background: #fed7aa; color: var(--orange); text-decoration: line-through; }
@@ -220,9 +221,8 @@
       <div class="stat-box"><div class="stat-num warn" id="stat-om">—</div><div class="stat-lbl">Omissions</div></div>
     </div>
 
-    <div style="margin-bottom:8px;font-size:.85rem;font-weight:600">Texte annoté :</div>
     <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px">
-      <span><span style="background:#fecaca;padding:1px 6px;border-radius:4px">mot</span> Substitution</span>
+      <span><span style="background:#fecaca;padding:1px 6px;border-radius:4px">mot</span> Substitution / erreur</span>
       <span><span style="background:#fed7aa;padding:1px 6px;border-radius:4px;text-decoration:line-through">mot</span> Omission</span>
     </div>
     <div id="report-text" style="font-size:1.15rem;line-height:2.2;padding:16px;background:var(--gray-50);border-radius:var(--radius);border:1.5px solid var(--gray-200)"></div>
@@ -288,7 +288,9 @@ const LIBRARY = [
 let state = {
   lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
   words:[], rawWords:[], recognition:null, isRecording:false,
-  fullTranscript:'', errors:[]
+  fullTranscript:'', errors:[], wordStatus:[],
+  // Toutes les alternatives par segment final (pour la détection multi-alternative)
+  resultAlternatives: []
 };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -381,7 +383,9 @@ function startSession() {
 
 // ── Enregistrement ───────────────────────────────────────────
 function resetToRecording() {
-  state.fullTranscript = ''; state.errors = [];
+  state.fullTranscript = '';
+  state.errors = [];
+  state.resultAlternatives = [];
   renderWords([]);
   document.getElementById('live-transcript').textContent = 'En attente du microphone…';
   document.getElementById('rec-badge').classList.add('hidden');
@@ -402,14 +406,24 @@ function startRecording() {
   }
   const rec = new SR();
   rec.lang = state.lang === 'fr' ? 'fr-FR' : 'en-GB';
-  rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+  rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 5;
   let interim = '';
   rec.onresult = e => {
     interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) { state.fullTranscript += ' ' + t; updateHighlights(); }
-      else { interim = t; }
+      if (e.results[i].isFinal) {
+        // Collecte toutes les alternatives pour ce segment
+        const alts = [];
+        for (let k = 0; k < e.results[i].length; k++) {
+          alts.push(e.results[i][k].transcript);
+        }
+        state.resultAlternatives.push(alts);
+        // Utilise la meilleure alternative pour l'affichage et le transcript principal
+        state.fullTranscript += ' ' + e.results[i][0].transcript;
+        updateHighlights();
+      } else {
+        interim = e.results[i][0].transcript;
+      }
     }
     document.getElementById('live-transcript').textContent =
       (state.fullTranscript + ' ' + interim).trim() || '…';
@@ -457,55 +471,108 @@ function align(expected, spoken) {
   return ops;
 }
 
-function updateHighlights() {
-  const ops = align(state.words, state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean));
-  const status = state.words.map(()=>'correct'); let wi=0;
+// Calcule le statut de chaque mot attendu à partir d'une liste d'ops
+function opsToStatus(ops, n) {
+  const status = new Array(n).fill('correct');
+  const errorDetail = new Array(n).fill(null);
+  let wi = 0;
   for (const op of ops) {
-    if (op.type==='ok')  { status[wi]='correct';  wi++; }
-    else if (op.type==='sub') { status[wi]='error';    wi++; }
-    else if (op.type==='del') { status[wi]='omission'; wi++; }
+    if (op.type === 'ok')  { wi++; }
+    else if (op.type === 'sub') { status[wi] = 'error';    errorDetail[wi] = op.got; wi++; }
+    else if (op.type === 'del') { status[wi] = 'omission'; wi++; }
   }
+  return { status, errorDetail };
+}
+
+function updateHighlights() {
+  const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
+  const ops = align(state.words, spoken);
+  const { status } = opsToStatus(ops, state.words.length);
   renderWords(status);
 }
 
-// ── Rapport ──────────────────────────────────────────────────
+// ── Rapport — détection multi-alternative ────────────────────
 function buildReport() {
-  const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
-  const ops = align(state.words, spoken);
-  const status = state.words.map(()=>'correct');
-  state.errors = []; let wi=0;
-  for (const op of ops) {
-    if (op.type==='ok') { wi++; }
-    else if (op.type==='sub') { status[wi]='error';    state.errors.push({index:wi,type:'sub',expected:state.rawWords[wi],got:op.got}); wi++; }
-    else if (op.type==='del') { status[wi]='omission'; state.errors.push({index:wi,type:'om', expected:state.rawWords[wi],got:null});   wi++; }
-  }
-  renderWords(status);
+  // Reconstruit les transcripts alternatifs complets segment par segment
+  // Pour chaque position de segment, on a jusqu'à 5 alternatives
+  // On génère toutes les combinaisons représentatives en prenant
+  // la meilleure (index 0) pour tous les segments sauf un qu'on permute.
+  // Cela donne N*K transcripts sans explosion combinatoire.
 
-  const total=state.words.length, errCount=state.errors.length;
-  const subs=state.errors.filter(e=>e.type==='sub').length;
-  const oms =state.errors.filter(e=>e.type==='om').length;
-  const acc =total>0?Math.round(((total-errCount)/total)*100):100;
+  const segments = state.resultAlternatives; // tableau de tableaux d'alternatives
+  const nSeg = segments.length;
+
+  // Transcripts à tester : d'abord le principal (toutes meilleures alternatives)
+  const transcripts = [];
+
+  // Transcript principal
+  const best = segments.map(s => s[0]).join(' ');
+  transcripts.push(best);
+
+  // Pour chaque segment, permuter avec chacune de ses alternatives (k>0)
+  for (let s = 0; s < nSeg; s++) {
+    for (let k = 1; k < segments[s].length; k++) {
+      const parts = segments.map((seg, idx) => idx === s ? seg[k] : seg[0]);
+      transcripts.push(parts.join(' '));
+    }
+  }
+
+  // Aligne chaque transcript et prend l'union des erreurs
+  // Un mot est en erreur si AU MOINS UNE alternative le détecte comme erreur
+  const errorStatus = new Array(state.words.length).fill('correct');
+  const errorGot    = new Array(state.words.length).fill(null);
+
+  for (const transcript of transcripts) {
+    const spoken = transcript.split(/\s+/).map(normalise).filter(Boolean);
+    const ops = align(state.words, spoken);
+    const { status, errorDetail } = opsToStatus(ops, state.words.length);
+    for (let wi = 0; wi < state.words.length; wi++) {
+      if (status[wi] === 'omission') {
+        errorStatus[wi] = 'omission';
+      } else if (status[wi] === 'error' && errorStatus[wi] !== 'omission') {
+        errorStatus[wi] = 'error';
+        if (!errorGot[wi]) errorGot[wi] = errorDetail[wi];
+      }
+    }
+  }
+
+  state.wordStatus = errorStatus;
+  state.errors = [];
+  for (let wi = 0; wi < state.words.length; wi++) {
+    if (errorStatus[wi] === 'error') {
+      state.errors.push({ index: wi, type: 'sub', expected: state.rawWords[wi], got: errorGot[wi] });
+    } else if (errorStatus[wi] === 'omission') {
+      state.errors.push({ index: wi, type: 'om', expected: state.rawWords[wi], got: null });
+    }
+  }
+
+  renderWords(errorStatus);
+
+  const total = state.words.length, errCount = state.errors.length;
+  const subs  = state.errors.filter(e => e.type === 'sub').length;
+  const oms   = state.errors.filter(e => e.type === 'om').length;
+  const acc   = total > 0 ? Math.round(((total - errCount) / total) * 100) : 100;
 
   document.getElementById('stat-total').textContent = total;
-  const se=document.getElementById('stat-errors'); se.textContent=errCount;
-  se.className='stat-num '+(errCount===0?'good':errCount<total*.1?'warn':'bad');
-  const sa=document.getElementById('stat-accuracy'); sa.textContent=acc+'%';
-  sa.className='stat-num '+(acc>=95?'good':acc>=85?'warn':'bad');
-  document.getElementById('stat-sub').textContent=subs;
-  document.getElementById('stat-om').textContent=oms;
+  const se = document.getElementById('stat-errors'); se.textContent = errCount;
+  se.className = 'stat-num ' + (errCount === 0 ? 'good' : errCount < total * .1 ? 'warn' : 'bad');
+  const sa = document.getElementById('stat-accuracy'); sa.textContent = acc + '%';
+  sa.className = 'stat-num ' + (acc >= 95 ? 'good' : acc >= 85 ? 'warn' : 'bad');
+  document.getElementById('stat-sub').textContent = subs;
+  document.getElementById('stat-om').textContent  = oms;
 
   document.getElementById('report-header').textContent =
-    `${state.student ? state.student + ' · ' : ''}${state.lang==='fr'?'Français':'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+    `${state.student ? state.student + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
 
-  document.getElementById('report-text').innerHTML = annotatedHtml(status);
+  document.getElementById('report-text').innerHTML = annotatedHtml(errorStatus);
 
-  const list=document.getElementById('error-list'); list.innerHTML='';
+  const list = document.getElementById('error-list'); list.innerHTML = '';
   if (!state.errors.length) {
-    list.innerHTML='<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
+    list.innerHTML = '<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
   } else {
     state.errors.forEach(e => {
-      const d=document.createElement('div'); d.className='error-item';
-      d.innerHTML=`<div><div class="error-type ${e.type==='sub'?'sub':'om'}">${e.type==='sub'?'Substitution':'Omission'}</div><div>Attendu : <strong>${e.expected}</strong> ${e.got?`→ Lu : <em>${e.got}</em>`:'→ <em>non lu</em>'}</div></div>`;
+      const d = document.createElement('div'); d.className = 'error-item';
+      d.innerHTML = `<div><div class="error-type ${e.type === 'sub' ? 'sub' : 'om'}">${e.type === 'sub' ? 'Substitution' : 'Omission'}</div><div>Attendu : <strong>${e.expected}</strong> ${e.got ? `→ Lu : <em>${e.got}</em>` : '→ <em>non lu</em>'}</div></div>`;
       list.appendChild(d);
     });
   }
@@ -515,38 +582,38 @@ function buildReport() {
 }
 
 function annotatedHtml(status) {
-  return state.rawWords.map((w,i)=>{
-    if (status[i]==='error')    return `<span class="word word-error">${w}</span> `;
-    if (status[i]==='omission') return `<span class="word word-omission">${w}</span> `;
+  return state.rawWords.map((w, i) => {
+    if (status[i] === 'error')    return `<span class="word word-error">${w}</span> `;
+    if (status[i] === 'omission') return `<span class="word word-omission">${w}</span> `;
     return `<span class="word word-correct">${w}</span> `;
   }).join('');
 }
 
 function renderWords(status) {
-  const area=document.getElementById('reading-area');
-  area.innerHTML = (!status||!status.length)
-    ? state.rawWords.map(w=>`<span class="word word-correct">${w}</span> `).join('')
+  const area = document.getElementById('reading-area');
+  area.innerHTML = (!status || !status.length)
+    ? state.rawWords.map(w => `<span class="word word-correct">${w}</span> `).join('')
     : annotatedHtml(status);
 }
 
 // ── Copier le rapport ────────────────────────────────────────
 function copyReport() {
-  const total=state.words.length, errCount=state.errors.length;
-  const acc=total>0?Math.round(((total-errCount)/total)*100):100;
-  const date=new Date().toLocaleDateString('fr-CH');
-  const errLines = state.errors.map(e=>
-    `  [${e.type==='sub'?'Substitution':'Omission'}] ${e.expected}${e.got?' → '+e.got:''}`
+  const total = state.words.length, errCount = state.errors.length;
+  const acc   = total > 0 ? Math.round(((total - errCount) / total) * 100) : 100;
+  const date  = new Date().toLocaleDateString('fr-CH');
+  const errLines = state.errors.map(e =>
+    `  [${e.type === 'sub' ? 'Substitution' : 'Omission'}] ${e.expected}${e.got ? ' → ' + e.got : ''}`
   ).join('\n');
-  const annotated = state.rawWords.map((w,i)=>{
-    const e=state.errors.find(e=>e.index===i);
-    return e?(e.type==='sub'?`[${w}→${e.got}]`:`[OMIS:${w}]`):w;
+  const annotated = state.rawWords.map((w, i) => {
+    const e = state.errors.find(e => e.index === i);
+    return e ? (e.type === 'sub' ? `[${w}→${e.got}]` : `[OMIS:${w}]`) : w;
   }).join(' ');
 
   const txt =
 `RAPPORT DE LECTURE — LGB Primaire
 Date       : ${date}
 Élève      : ${state.student || '—'}
-Langue     : ${state.lang==='fr'?'Français':'English'}
+Langue     : ${state.lang === 'fr' ? 'Français' : 'English'}
 Niveau     : ${state.level}
 Texte      : ${state.textTitle}
 
@@ -554,8 +621,8 @@ RÉSULTATS
 Mots total : ${total}
 Erreurs    : ${errCount}
 Précision  : ${acc}%
-Substitut. : ${state.errors.filter(e=>e.type==='sub').length}
-Omissions  : ${state.errors.filter(e=>e.type==='om').length}
+Substitut. : ${state.errors.filter(e => e.type === 'sub').length}
+Omissions  : ${state.errors.filter(e => e.type === 'om').length}
 
 DÉTAIL DES ERREURS
 ${errLines || '  Aucune erreur'}
@@ -565,8 +632,8 @@ ${annotated}`;
 
   navigator.clipboard.writeText(txt).then(() => {
     document.getElementById('copy-status').textContent = '✓ Copié ! Collez dans Google Docs, Sheets ou un email.';
-    setTimeout(()=>document.getElementById('copy-status').textContent='', 4000);
-  }).catch(()=>{
+    setTimeout(() => document.getElementById('copy-status').textContent = '', 4000);
+  }).catch(() => {
     document.getElementById('copy-status').textContent = 'Copiez manuellement ci-dessus.';
   });
 }
@@ -577,7 +644,7 @@ function retrySession() { resetToRecording(); hide('step-report'); show('step-re
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
 function normalise(w) {
-  return w.toLowerCase().replace(/['']/g,"'").replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi,'').trim();
+  return w.toLowerCase().replace(/['']/g, "'").replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi, '').trim();
 }
 </script>
 </body>
