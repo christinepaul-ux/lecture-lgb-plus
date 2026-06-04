@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outil de lecture — LGB Primaire</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:    #2563eb;
+      --blue-lt: #dbeafe;
+      --green:   #16a34a;
+      --red:     #dc2626;
+      --orange:  #ea580c;
+      --yellow:  #fef08a;
+      --gray-50: #f8fafc;
+      --gray-100:#f1f5f9;
+      --gray-200:#e2e8f0;
+      --gray-400:#94a3b8;
+      --gray-700:#334155;
+      --gray-900:#0f172a;
+      --radius:  10px;
+      --shadow:  0 2px 12px rgba(0,0,0,.08);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+      padding: 16px;
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
+    label { font-size: .85rem; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 4px; }
+    input[type=text], select, textarea {
+      width: 100%; padding: 9px 12px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
+      font-size: .95rem; background: #fff;
+      transition: border-color .15s;
+    }
+    input[type=text]:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--blue);
+    }
+    textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.6; }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .app { max-width: 780px; margin: 0 auto; }
+    header {
+      background: var(--blue); color: #fff;
+      border-radius: var(--radius); padding: 16px 20px;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+    }
+    header svg { flex-shrink: 0; }
+    .card {
+      background: #fff; border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 20px;
+      margin-bottom: 16px;
+    }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 500px) { .row-2 { grid-template-columns: 1fr; } }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; border-radius: var(--radius);
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      border: none; transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary   { background: var(--blue);  color: #fff; }
+    .btn-danger    { background: var(--red);   color: #fff; }
+    .btn-success   { background: var(--green); color: #fff; }
+    .btn-outline   { background: #fff; color: var(--blue); border: 1.5px solid var(--blue); }
+    .btn-gray      { background: var(--gray-200); color: var(--gray-700); }
+    .btn-group     { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+
+    /* ── Recording indicator ──────────────────────────────── */
+    .rec-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #fee2e2; color: var(--red);
+      border-radius: 999px; padding: 4px 12px;
+      font-size: .82rem; font-weight: 700;
+    }
+    .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Text display ─────────────────────────────────────── */
+    #reading-area {
+      font-size: 1.25rem; line-height: 2.2;
+      padding: 16px; background: var(--gray-50);
+      border-radius: var(--radius); border: 1.5px solid var(--gray-200);
+      min-height: 120px;
+    }
+    .word {
+      display: inline;
+      padding: 1px 3px; border-radius: 4px;
+      cursor: default; transition: background .15s;
+    }
+    .word-correct  { background: transparent; }
+    .word-active   { background: #bfdbfe; outline: 2px solid var(--blue); border-radius: 4px; }
+    .word-error    { background: #fecaca; color: var(--red); font-weight: 700; text-decoration: underline wavy var(--red); }
+    .word-omission { background: #fed7aa; color: var(--orange); text-decoration: line-through; }
+
+    /* ── Transcription live ───────────────────────────────── */
+    #live-transcript {
+      font-size: .9rem; color: var(--gray-700);
+      background: var(--gray-100); border-radius: var(--radius);
+      padding: 10px 14px; min-height: 42px; margin-top: 12px;
+      border: 1px dashed var(--gray-400); font-style: italic;
+    }
+
+    /* ── Report ───────────────────────────────────────────── */
+    .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    .stat-box {
+      flex: 1; min-width: 110px;
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius); padding: 12px; text-align: center;
+    }
+    .stat-num { font-size: 1.8rem; font-weight: 800; }
+    .stat-lbl { font-size: .75rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: .04em; }
+    .stat-num.good  { color: var(--green); }
+    .stat-num.warn  { color: var(--orange); }
+    .stat-num.bad   { color: var(--red); }
+
+    .error-list { margin-top: 12px; }
+    .error-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 12px; border-radius: 8px;
+      background: #fff7ed; border: 1px solid #fed7aa;
+      margin-bottom: 6px; font-size: .9rem;
+    }
+    .error-type { font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+    .error-type.sub { color: var(--red); }
+    .error-type.om  { color: var(--orange); }
+
+    /* ── Student save form ───────────────────────────────── */
+    .save-form {
+      background: #f0fdf4; border: 1.5px solid #bbf7d0;
+      border-radius: var(--radius); padding: 16px; margin-top: 14px;
+    }
+    .save-form h3 { font-size: .95rem; font-weight: 700; margin-bottom: 12px; color: var(--green); }
+
+    /* ── Hidden ───────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Tabs ─────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 2px solid var(--gray-200); }
+    .tab {
+      padding: 8px 16px; cursor: pointer; font-size: .9rem; font-weight: 600;
+      border-radius: var(--radius) var(--radius) 0 0;
+      color: var(--gray-400); background: none; border: none;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color .15s;
+    }
+    .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-panel.hidden { display: none; }
+
+    /* ── Notice ───────────────────────────────────────────── */
+    .notice {
+      background: var(--blue-lt); border-radius: var(--radius);
+      padding: 10px 14px; font-size: .85rem; color: #1e40af;
+      margin-bottom: 12px;
+    }
+    .notice.warn { background: #fff7ed; color: #9a3412; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+    <div>
+      <h1>Outil de lecture enregistrée</h1>
+      <div style="font-size:.8rem;opacity:.85">LGB Primaire — Évaluation de la lecture orale</div>
+    </div>
+  </header>
+
+  <!-- ── STEP 1 : Setup ─────────────────────────────────── -->
+  <div id="step-setup" class="card">
+    <h2>1 · Paramètres</h2>
+    <div class="row-2">
+      <div>
+        <label>Langue / Language</label>
+        <select id="lang-select">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div>
+        <label>Niveau</label>
+        <select id="level-select">
+          <option value="1A">1A</option>
+          <option value="1B">1B</option>
+          <option value="2A">2A</option>
+          <option value="2B">2B</option>
+          <option value="3A">3A</option>
+          <option value="3B">3B</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <label>Élève</label>
+      <input type="text" id="student-name" placeholder="Prénom Nom">
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="tabs">
+        <button class="tab active" data-tab="library">Bibliothèque de textes</button>
+        <button class="tab" data-tab="custom">Texte libre</button>
+      </div>
+
+      <!-- Library tab -->
+      <div id="tab-library" class="tab-panel">
+        <label>Choisir un texte</label>
+        <select id="text-select"></select>
+        <div id="text-preview" style="margin-top:10px;font-size:.9rem;color:var(--gray-700);line-height:1.6;padding:10px;background:var(--gray-100);border-radius:8px;min-height:60px"></div>
+      </div>
+
+      <!-- Custom tab -->
+      <div id="tab-custom" class="tab-panel hidden">
+        <label>Titre du texte</label>
+        <input type="text" id="custom-title" placeholder="Ex: La grenouille et le bœuf" style="margin-bottom:10px">
+        <label>Texte à lire</label>
+        <textarea id="custom-text" placeholder="Collez ou tapez le texte ici…"></textarea>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btn-start-session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Commencer la séance
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STEP 2 : Recording ─────────────────────────────── -->
+  <div id="step-recording" class="card hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <h2 style="margin:0">2 · Lecture</h2>
+      <span id="rec-badge" class="rec-badge hidden">
+        <span class="rec-dot"></span> Enregistrement
+      </span>
+    </div>
+
+    <div id="compatibility-notice" class="notice hidden warn"></div>
+
+    <div style="font-size:.85rem;color:var(--gray-400);margin-bottom:8px" id="session-info"></div>
+
+    <!-- Text display word by word -->
+    <div id="reading-area"></div>
+
+    <!-- Live transcript -->
+    <div id="live-transcript">En attente du microphone…</div>
+
+    <div class="btn-group">
+      <button class="btn btn-danger" id="btn-record">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+        Démarrer l'enregistrement
+      </button>
+      <button class="btn btn-gray" id="btn-stop-record" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        Arrêter
+      </button>
+      <button class="btn btn-outline" id="btn-reset-session">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9 9 0 00-9 9"/><path d="M3 3v4h4"/></svg>
+        Recommencer
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3 : Report ────────────────────────────────── -->
+  <div id="step-report" class="card hidden">
+    <h2>3 · Rapport de lecture</h2>
+
+    <!-- Statistics -->
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-lbl">Mots total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="stat-errors">—</div>
+        <div class="stat-lbl">Erreurs</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" id="stat-accuracy">—</div>
+        <div class="stat-lbl">Précision</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num warn" id="stat-sub">—</div>
+        <div class="stat-lbl">Substitutions</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num warn" id="stat-om">—</div>
+        <div class="stat-lbl">Omissions</div>
+      </div>
+    </div>
+
+    <!-- Annotated text -->
+    <div style="margin-bottom:8px;font-size:.85rem;font-weight:600">Texte annoté :</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;margin-bottom:8px">
+      <span><span style="background:#fecaca;padding:1px 6px;border-radius:4px">mot</span> Substitution / erreur</span>
+      <span><span style="background:#fed7aa;padding:1px 6px;border-radius:4px;text-decoration:line-through">mot</span> Omission</span>
+    </div>
+    <div id="report-text" style="font-size:1.15rem;line-height:2.2;padding:16px;background:var(--gray-50);border-radius:var(--radius);border:1.5px solid var(--gray-200)"></div>
+
+    <!-- Error list -->
+    <div class="error-list" id="error-list-container">
+      <div style="font-size:.85rem;font-weight:600;margin:14px 0 8px">Détail des erreurs :</div>
+      <div id="error-list"></div>
+    </div>
+
+    <!-- Save to Sheets -->
+    <div class="save-form" id="save-form">
+      <h3>💾 Enregistrer dans Google Sheets</h3>
+      <div id="save-status"></div>
+      <button class="btn btn-success" id="btn-save">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Sauvegarder le rapport
+      </button>
+    </div>
+
+    <div class="btn-group" style="margin-top:16px">
+      <button class="btn btn-primary" id="btn-new-session">Nouvelle séance</button>
+      <button class="btn btn-outline" id="btn-retry">Réessayer le même texte</button>
+      <button class="btn btn-gray" id="btn-print">Imprimer / PDF</button>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════════════════════
+let state = {
+  lang: 'fr',
+  level: '1A',
+  student: '',
+  textTitle: '',
+  originalText: '',
+  words: [],          // tokenised original words (lowercase, no punct)
+  rawWords: [],       // original words as displayed
+  recognition: null,
+  isRecording: false,
+  fullTranscript: '',
+  errors: [],         // { index, type:'sub'|'om', expected, got }
+  library: []
+};
+
+// ════════════════════════════════════════════════════════════
+//  Init
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  loadLibrary();
+  bindTabs();
+  bindSetup();
+  checkSpeechSupport();
+});
+
+function loadLibrary() {
+  google.script.run
+    .withSuccessHandler(lib => {
+      state.library = lib;
+      refreshTextSelect();
+    })
+    .withFailureHandler(err => console.error('Library load failed:', err))
+    .getTextLibrary();
+}
+
+function refreshTextSelect() {
+  const sel = document.getElementById('text-select');
+  const lang = document.getElementById('lang-select').value;
+  sel.innerHTML = '';
+  state.library
+    .filter(t => t.lang === lang)
+    .forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = `[${t.level}] ${t.title}`;
+      sel.appendChild(opt);
+    });
+  updatePreview();
+}
+
+function updatePreview() {
+  const sel = document.getElementById('text-select');
+  const item = state.library.find(t => t.id === sel.value);
+  document.getElementById('text-preview').textContent = item ? item.text : '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  Tab switching
+// ════════════════════════════════════════════════════════════
+function bindTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById('tab-' + target).classList.remove('hidden');
+    });
+  });
+  document.getElementById('text-select').addEventListener('change', updatePreview);
+  document.getElementById('lang-select').addEventListener('change', () => {
+    refreshTextSelect();
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  Setup bindings
+// ════════════════════════════════════════════════════════════
+function bindSetup() {
+  document.getElementById('btn-start-session').addEventListener('click', startSession);
+  document.getElementById('btn-record').addEventListener('click', startRecording);
+  document.getElementById('btn-stop-record').addEventListener('click', stopRecording);
+  document.getElementById('btn-reset-session').addEventListener('click', () => resetToRecording());
+  document.getElementById('btn-save').addEventListener('click', saveReport);
+  document.getElementById('btn-new-session').addEventListener('click', newSession);
+  document.getElementById('btn-retry').addEventListener('click', retrySession);
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+}
+
+// ════════════════════════════════════════════════════════════
+//  Speech recognition check
+// ════════════════════════════════════════════════════════════
+function checkSpeechSupport() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    const notice = document.getElementById('compatibility-notice');
+    notice.classList.remove('hidden');
+    notice.innerHTML = '⚠️ La reconnaissance vocale automatique n\'est pas disponible sur ce navigateur. Utilisez <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong> pour bénéficier de la transcription automatique.';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  Session start
+// ════════════════════════════════════════════════════════════
+function startSession() {
+  state.lang    = document.getElementById('lang-select').value;
+  state.level   = document.getElementById('level-select').value;
+  state.student = document.getElementById('student-name').value.trim();
+
+  const isLibrary = document.querySelector('.tab.active').dataset.tab === 'library';
+  if (isLibrary) {
+    const id   = document.getElementById('text-select').value;
+    const item = state.library.find(t => t.id === id);
+    if (!item) { alert('Veuillez choisir un texte.'); return; }
+    state.textTitle    = item.title;
+    state.originalText = item.text;
+  } else {
+    state.originalText = document.getElementById('custom-text').value.trim();
+    state.textTitle    = document.getElementById('custom-title').value.trim() || 'Texte personnalisé';
+    if (!state.originalText) { alert('Veuillez saisir un texte.'); return; }
+  }
+
+  // Tokenise
+  state.rawWords = tokeniseRaw(state.originalText);
+  state.words    = state.rawWords.map(w => normaliseWord(w));
+
+  resetToRecording();
+  show('step-recording');
+  hide('step-setup');
+
+  document.getElementById('session-info').textContent =
+    `${state.student ? state.student + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  Recording
+// ════════════════════════════════════════════════════════════
+function resetToRecording() {
+  state.fullTranscript = '';
+  state.errors = [];
+  renderReadingArea([]);
+  document.getElementById('live-transcript').textContent = 'En attente du microphone…';
+  document.getElementById('rec-badge').classList.add('hidden');
+  document.getElementById('btn-record').disabled = false;
+  document.getElementById('btn-stop-record').disabled = true;
+  hide('step-report');
+}
+
+function startRecording() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    // Fallback: manual mode — go straight to report with all words marked as unknown
+    document.getElementById('live-transcript').textContent =
+      '(Mode manuel — reconnaissance vocale non disponible. Cliquez sur Arrêter pour saisir les erreurs manuellement.)';
+    state.isRecording = true;
+    document.getElementById('btn-record').disabled = true;
+    document.getElementById('btn-stop-record').disabled = false;
+    document.getElementById('rec-badge').classList.remove('hidden');
+    return;
+  }
+
+  const rec = new SpeechRecognition();
+  rec.lang = state.lang === 'fr' ? 'fr-FR' : 'en-GB';
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  let interim = '';
+
+  rec.onresult = e => {
+    interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        state.fullTranscript += ' ' + t;
+        updateWordHighlights();
+      } else {
+        interim = t;
+      }
+    }
+    document.getElementById('live-transcript').textContent =
+      (state.fullTranscript + ' ' + interim).trim() || '…';
+  };
+
+  rec.onerror = e => {
+    if (e.error !== 'no-speech') {
+      document.getElementById('live-transcript').textContent = 'Erreur micro : ' + e.error;
+    }
+  };
+
+  rec.onend = () => {
+    if (state.isRecording) rec.start(); // keep going until manually stopped
+  };
+
+  state.recognition = rec;
+  state.isRecording = true;
+  rec.start();
+
+  document.getElementById('rec-badge').classList.remove('hidden');
+  document.getElementById('btn-record').disabled = true;
+  document.getElementById('btn-stop-record').disabled = false;
+}
+
+function stopRecording() {
+  state.isRecording = false;
+  if (state.recognition) {
+    state.recognition.stop();
+    state.recognition = null;
+  }
+  document.getElementById('rec-badge').classList.add('hidden');
+  document.getElementById('btn-record').disabled = false;
+  document.getElementById('btn-stop-record').disabled = true;
+  buildReport();
+}
+
+// ════════════════════════════════════════════════════════════
+//  Word comparison (Levenshtein alignment)
+// ════════════════════════════════════════════════════════════
+function alignWords(expected, spoken) {
+  // Returns array of operations: { type: 'ok'|'sub'|'del', exp, got }
+  // 'del' = omission (expected but not spoken)
+  // 'ins' = insertion (spoken but not expected) — counted as part of preceding sub
+  const n = expected.length;
+  const m = spoken.length;
+  const COST_SUB = 1, COST_DEL = 1, COST_INS = 0.5;
+
+  // DP table
+  const dp = Array.from({length: n+1}, () => new Float32Array(m+1));
+  for (let i = 1; i <= n; i++) dp[i][0] = i * COST_DEL;
+  for (let j = 1; j <= m; j++) dp[0][j] = j * COST_INS;
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      const match = expected[i-1] === spoken[j-1];
+      dp[i][j] = Math.min(
+        dp[i-1][j-1] + (match ? 0 : COST_SUB),
+        dp[i-1][j]   + COST_DEL,
+        dp[i][j-1]   + COST_INS
+      );
+    }
+  }
+
+  // Traceback
+  const ops = [];
+  let i = n, j = m;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0) {
+      const match = expected[i-1] === spoken[j-1];
+      if (dp[i][j] === dp[i-1][j-1] + (match ? 0 : COST_SUB)) {
+        ops.unshift({ type: match ? 'ok' : 'sub', exp: expected[i-1], got: spoken[j-1] });
+        i--; j--;
+        continue;
+      }
+    }
+    if (i > 0 && dp[i][j] === dp[i-1][j] + COST_DEL) {
+      ops.unshift({ type: 'del', exp: expected[i-1], got: null });
+      i--;
+    } else {
+      ops.unshift({ type: 'ins', exp: null, got: spoken[j-1] });
+      j--;
+    }
+  }
+  return ops;
+}
+
+function updateWordHighlights() {
+  const spoken = tokeniseSpeech(state.fullTranscript);
+  const ops    = alignWords(state.words, spoken);
+
+  // Build per-original-word status
+  const status = state.words.map(() => 'correct');
+  let wi = 0;
+  for (const op of ops) {
+    if (op.type === 'ok')  { status[wi] = 'correct'; wi++; }
+    else if (op.type === 'sub') { status[wi] = 'error'; wi++; }
+    else if (op.type === 'del') { status[wi] = 'omission'; wi++; }
+    // ins: skip (not an original word)
+  }
+  renderReadingArea(status);
+}
+
+// ════════════════════════════════════════════════════════════
+//  Build report
+// ════════════════════════════════════════════════════════════
+function buildReport() {
+  const spoken = tokeniseSpeech(state.fullTranscript);
+  const ops    = alignWords(state.words, spoken);
+
+  const status  = state.words.map(() => 'correct');
+  state.errors  = [];
+  let wi = 0;
+
+  for (const op of ops) {
+    if (op.type === 'ok')  { wi++; }
+    else if (op.type === 'sub') {
+      status[wi] = 'error';
+      state.errors.push({ index: wi, type: 'sub', expected: state.rawWords[wi], got: op.got });
+      wi++;
+    } else if (op.type === 'del') {
+      status[wi] = 'omission';
+      state.errors.push({ index: wi, type: 'om', expected: state.rawWords[wi], got: null });
+      wi++;
+    }
+  }
+
+  renderReadingArea(status);
+
+  const total    = state.words.length;
+  const errCount = state.errors.length;
+  const subs     = state.errors.filter(e => e.type === 'sub').length;
+  const oms      = state.errors.filter(e => e.type === 'om').length;
+  const accuracy = total > 0 ? Math.round(((total - errCount) / total) * 100) : 100;
+
+  // Stats
+  document.getElementById('stat-total').textContent = total;
+  const statErr = document.getElementById('stat-errors');
+  statErr.textContent = errCount;
+  statErr.className = 'stat-num ' + (errCount === 0 ? 'good' : errCount < total * .1 ? 'warn' : 'bad');
+  const statAcc = document.getElementById('stat-accuracy');
+  statAcc.textContent = accuracy + '%';
+  statAcc.className = 'stat-num ' + (accuracy >= 95 ? 'good' : accuracy >= 85 ? 'warn' : 'bad');
+  document.getElementById('stat-sub').textContent = subs;
+  document.getElementById('stat-om').textContent  = oms;
+
+  // Annotated text
+  document.getElementById('report-text').innerHTML = buildAnnotatedHtml(status);
+
+  // Error list
+  const list = document.getElementById('error-list');
+  list.innerHTML = '';
+  if (state.errors.length === 0) {
+    list.innerHTML = '<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
+  } else {
+    state.errors.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'error-item';
+      div.innerHTML = `
+        <div>
+          <div class="error-type ${e.type === 'sub' ? 'sub' : 'om'}">
+            ${e.type === 'sub' ? 'Substitution' : 'Omission'}
+          </div>
+          <div>
+            Attendu : <strong>${e.expected}</strong>
+            ${e.got ? `→ Lu : <em>${e.got}</em>` : '→ <em>non lu</em>'}
+          </div>
+        </div>`;
+      list.appendChild(div);
+    });
+  }
+
+  hide('step-recording');
+  show('step-report');
+}
+
+function buildAnnotatedHtml(status) {
+  return state.rawWords.map((w, i) => {
+    if (status[i] === 'error')
+      return `<span class="word word-error">${w}</span> `;
+    if (status[i] === 'omission')
+      return `<span class="word word-omission">${w}</span> `;
+    return `<span class="word word-correct">${w}</span> `;
+  }).join('');
+}
+
+function renderReadingArea(status) {
+  const area = document.getElementById('reading-area');
+  if (!status || status.length === 0) {
+    area.innerHTML = state.rawWords.map(w =>
+      `<span class="word word-correct">${w}</span> `).join('');
+    return;
+  }
+  area.innerHTML = buildAnnotatedHtml(status);
+}
+
+// ════════════════════════════════════════════════════════════
+//  Save to Google Sheets
+// ════════════════════════════════════════════════════════════
+function saveReport() {
+  const btn = document.getElementById('btn-save');
+  const statusEl = document.getElementById('save-status');
+  btn.disabled = true;
+  statusEl.innerHTML = '<em>Enregistrement en cours…</em>';
+
+  const errDetails = state.errors.map(e =>
+    `[${e.type === 'sub' ? 'S' : 'O'}] ${e.expected}${e.got ? '→' + e.got : ''}`
+  ).join('; ');
+
+  const total    = state.words.length;
+  const errCount = state.errors.length;
+  const annotatedText = state.rawWords.map((w, i) => {
+    const err = state.errors.find(e => e.index === i);
+    if (!err) return w;
+    return err.type === 'sub' ? `[${w}→${err.got}]` : `[OMIS:${w}]`;
+  }).join(' ');
+
+  google.script.run
+    .withSuccessHandler(res => {
+      statusEl.innerHTML = `<span style="color:var(--green);font-weight:700">✓ Sauvegardé ! Précision : ${res.accuracy}%</span>`;
+      btn.disabled = false;
+    })
+    .withFailureHandler(err => {
+      statusEl.innerHTML = `<span style="color:var(--red)">Erreur : ${err.message}</span>`;
+      btn.disabled = false;
+    })
+    .saveReport({
+      studentName:  state.student,
+      lang:         state.lang,
+      level:        state.level,
+      textTitle:    state.textTitle,
+      totalWords:   total,
+      errorCount:   errCount,
+      errorDetails: errDetails,
+      annotatedText
+    });
+}
+
+// ════════════════════════════════════════════════════════════
+//  Navigation
+// ════════════════════════════════════════════════════════════
+function newSession() {
+  hide('step-report');
+  hide('step-recording');
+  show('step-setup');
+}
+
+function retrySession() {
+  resetToRecording();
+  hide('step-report');
+  show('step-recording');
+}
+
+// ════════════════════════════════════════════════════════════
+//  Helpers
+// ════════════════════════════════════════════════════════════
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+// Split text preserving display form but keeping spaces sensible
+function tokeniseRaw(text) {
+  // Split on spaces, keep punctuation attached to word for display
+  return text.split(/\s+/).filter(Boolean);
+}
+
+// Normalise for comparison: lowercase, strip punctuation
+function normaliseWord(w) {
+  return w.toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi, '')
+    .trim();
+}
+
+function tokeniseSpeech(transcript) {
+  return transcript.split(/\s+/)
+    .map(normaliseWord)
+    .filter(Boolean);
+}
+</script>
+</body>
+</html>
