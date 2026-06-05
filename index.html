@@ -409,6 +409,8 @@ function startRecording() {
   rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 5;
   let interim = '';
   rec.onresult = e => {
+    gotResult = true;
+    clearTimeout(diagTimeout);
     interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
@@ -428,9 +430,24 @@ function startRecording() {
     document.getElementById('live-transcript').textContent =
       (state.fullTranscript + ' ' + interim).trim() || '…';
   };
+  let gotResult = false;
+  const diagTimeout = setTimeout(() => {
+    if (!gotResult && state.isRecording) {
+      document.getElementById('live-transcript').textContent =
+        '⚠️ Aucune transcription reçue. Le service vocal Google est peut-être bloqué par le réseau de l\'école. Essayez depuis un réseau WiFi personnel (partage de connexion téléphone).';
+    }
+  }, 6000);
+
   rec.onerror = e => {
-    if (e.error !== 'no-speech')
-      document.getElementById('live-transcript').textContent = 'Erreur micro : ' + e.error;
+    clearTimeout(diagTimeout);
+    const msgs = {
+      'not-allowed':       '🔒 Microphone refusé — autorisez-le dans les paramètres Chrome.',
+      'network':           '🌐 Erreur réseau — le service vocal Google est bloqué. Essayez avec un partage de connexion mobile.',
+      'service-not-allowed': '🚫 Service vocal désactivé sur cet appareil (politique de l\'école).',
+      'no-speech':         null
+    };
+    const msg = msgs[e.error];
+    if (msg) document.getElementById('live-transcript').textContent = msg;
   };
   rec.onend = () => { if (state.isRecording) rec.start(); };
   state.recognition = rec; state.isRecording = true; rec.start();
