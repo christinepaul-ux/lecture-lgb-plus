@@ -178,25 +178,6 @@
         Commencer la séance
       </button>
     </div>
-    <details style="margin-top:14px;font-size:.85rem">
-      <summary style="cursor:pointer;color:var(--gray-400);font-weight:600">⚙️ Sauvegarde Google Sheets (optionnel)</summary>
-      <div style="margin-top:10px;padding:12px;background:var(--gray-100);border-radius:8px">
-        <label>URL de votre script Google Apps Script</label>
-        <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom:6px">
-        <div style="font-size:.8rem;color:var(--gray-400)">
-          Les rapports seront automatiquement sauvegardés dans votre Google Sheet après chaque séance.
-          <a href="#" id="gas-url-help" style="color:var(--blue)">Comment obtenir l'URL ?</a>
-        </div>
-        <div id="gas-url-help-text" class="hidden" style="margin-top:8px;font-size:.8rem;color:var(--gray-700);line-height:1.5">
-          1. Ouvrez votre Google Spreadsheet → Extensions → Apps Script<br>
-          2. Copiez-collez le contenu de <code>Code.gs</code> et <code>appsscript.json</code><br>
-          3. Déployer → Nouveau déploiement → Application Web<br>
-          &nbsp;&nbsp;&nbsp;• Exécuter en tant que : <em>Moi</em><br>
-          &nbsp;&nbsp;&nbsp;• Accès : <em>Tout le monde</em><br>
-          4. Copiez l'URL générée et collez-la ici
-        </div>
-      </div>
-    </details>
   </div>
 
   <!-- ÉTAPE 2 : Lecture -->
@@ -362,16 +343,6 @@ function bindSetup() {
   document.getElementById('btn-new-session').addEventListener('click', newSession);
   document.getElementById('btn-retry').addEventListener('click', retrySession);
   document.getElementById('btn-print').addEventListener('click', () => window.print());
-  document.getElementById('gas-url-help').addEventListener('click', e => {
-    e.preventDefault();
-    document.getElementById('gas-url-help-text').classList.toggle('hidden');
-  });
-  // Persistance URL Google Sheets
-  const saved = localStorage.getItem('gasUrl');
-  if (saved) document.getElementById('gas-url').value = saved;
-  document.getElementById('gas-url').addEventListener('change', e => {
-    localStorage.setItem('gasUrl', e.target.value.trim());
-  });
 }
 
 // ── Compatibilité micro ───────────────────────────────────────
@@ -665,9 +636,10 @@ function buildReport() {
 }
 
 // ── Sauvegarde automatique dans Google Sheets ─────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxkCx89cbJCLZvt6xiesHPHRkUCv5HSLxup0nwXXlpPv0bA23gPIUrDYtznD870npVGkQ/exec';
+
 async function saveToSheets() {
-  const url = (localStorage.getItem('gasUrl') || '').trim();
-  if (!url) return;
+  const url = GAS_URL;
   const el = document.getElementById('sheets-status');
   el.textContent = '⏳ Sauvegarde en cours…';
   el.style.cssText = 'background:#dbeafe;color:#1e40af;display:block';
@@ -682,8 +654,11 @@ async function saveToSheets() {
   }).join(' ');
 
   try {
-    const resp = await fetch(url, {
+    // no-cors + text/plain évite le preflight CORS bloqué par GAS
+    await fetch(url, {
       method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         studentName: state.student,
         lang:        state.lang,
@@ -695,15 +670,11 @@ async function saveToSheets() {
         annotatedText: annotated
       })
     });
-    const data = await resp.json();
-    if (data.success) {
-      el.textContent = '✓ Sauvegardé dans Google Sheets';
-      el.style.cssText = 'background:#dcfce7;color:#166534;display:block';
-    } else {
-      throw new Error(data.error || 'Erreur inconnue');
-    }
+    // Avec no-cors la réponse est opaque — on suppose le succès si pas d'exception
+    el.textContent = '✓ Rapport envoyé à Google Sheets';
+    el.style.cssText = 'background:#dcfce7;color:#166534;display:block';
   } catch (err) {
-    el.textContent = '⚠️ Impossible de sauvegarder : ' + err.message;
+    el.textContent = '⚠️ Impossible d\'envoyer : vérifiez l\'URL du script et la connexion réseau.';
     el.style.cssText = 'background:#fff7ed;color:#9a3412;display:block';
   }
 }
