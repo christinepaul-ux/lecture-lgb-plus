@@ -288,9 +288,7 @@ const LIBRARY = [
 let state = {
   lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
   words:[], rawWords:[], recognition:null, isRecording:false,
-  fullTranscript:'', errors:[], wordStatus:[],
-  // Toutes les alternatives par segment final (pour la détection multi-alternative)
-  resultAlternatives: []
+  fullTranscript:'', errors:[], wordStatus:[]
 };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -385,7 +383,6 @@ function startSession() {
 function resetToRecording() {
   state.fullTranscript = '';
   state.errors = [];
-  state.resultAlternatives = [];
   renderWords([]);
   document.getElementById('live-transcript').textContent = 'En attente du microphone…';
   document.getElementById('rec-badge').classList.add('hidden');
@@ -406,7 +403,7 @@ function startRecording() {
   }
   const rec = new SR();
   rec.lang = state.lang === 'fr' ? 'fr-FR' : 'en-GB';
-  rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 5;
+  rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
   let interim = '';
   rec.onresult = e => {
     gotResult = true;
@@ -414,13 +411,6 @@ function startRecording() {
     interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
-        // Collecte toutes les alternatives pour ce segment
-        const alts = [];
-        for (let k = 0; k < e.results[i].length; k++) {
-          alts.push(e.results[i][k].transcript);
-        }
-        state.resultAlternatives.push(alts);
-        // Utilise la meilleure alternative pour l'affichage et le transcript principal
         state.fullTranscript += ' ' + e.results[i][0].transcript;
         updateHighlights();
       } else {
@@ -488,68 +478,63 @@ function align(expected, spoken) {
   return ops;
 }
 
-// Calcule le statut de chaque mot attendu à partir d'une liste d'ops
-function opsToStatus(ops, n) {
-  const status = new Array(n).fill('correct');
-  const errorDetail = new Array(n).fill(null);
-  let wi = 0;
-  for (const op of ops) {
-    if (op.type === 'ok')  { wi++; }
-    else if (op.type === 'sub') { status[wi] = 'error';    errorDetail[wi] = op.got; wi++; }
-    else if (op.type === 'del') { status[wi] = 'omission'; wi++; }
-  }
-  return { status, errorDetail };
-}
-
 function updateHighlights() {
   const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
   const ops = align(state.words, spoken);
-  const { status } = opsToStatus(ops, state.words.length);
+  const status = new Array(state.words.length).fill('correct');
+  let wi = 0;
+  for (const op of ops) {
+    if (op.type === 'ok')  { wi++; }
+    else if (op.type === 'sub') { status[wi] = 'error';    wi++; }
+    else if (op.type === 'del') { status[wi] = 'omission'; wi++; }
+  }
   renderWords(status);
 }
 
-// ── Rapport — détection multi-alternative ────────────────────
+// Retourne vrai si la différence entre exp et got est trop petite
+// pour être une vraie erreur de lecture (bruit de transcription).
+// Cas couverts :
+//   • exp est préfixe de got  : "cache" / "cachent"
+//   • exp est suffixe de got  : "dort"  / "endort"
+//   • got est préfixe de exp  : "endort"/ "dort"  (sens inverse)
+//   • distance d'édition ≤ 1  : erreur de frappe isolée
+function isTrivialVariant(exp, got) {
+  if (!got) return false;
+  if (got.startsWith(exp) || got.endsWith(exp)) return true;
+  if (exp.startsWith(got) || exp.endsWith(got)) return true;
+  // Distance d'édition ≤ 1
+  const la = exp.length, lb = got.length;
+  if (Math.abs(la - lb) > 1) return false;
+  const dp = Array.from({length: la + 1}, (_, i) =>
+    Array.from({length: lb + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= la; i++)
+    for (let j = 1; j <= lb; j++)
+      dp[i][j] = exp[i-1] === got[j-1] ? dp[i-1][j-1]
+               : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+  return dp[la][lb] <= 1;
+}
+
+// ── Rapport ──────────────────────────────────────────────────
 function buildReport() {
-  // Reconstruit les transcripts alternatifs complets segment par segment
-  // Pour chaque position de segment, on a jusqu'à 5 alternatives
-  // On génère toutes les combinaisons représentatives en prenant
-  // la meilleure (index 0) pour tous les segments sauf un qu'on permute.
-  // Cela donne N*K transcripts sans explosion combinatoire.
+  const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
+  const ops = align(state.words, spoken);
 
-  const segments = state.resultAlternatives; // tableau de tableaux d'alternatives
-  const nSeg = segments.length;
-
-  // Transcripts à tester : d'abord le principal (toutes meilleures alternatives)
-  const transcripts = [];
-
-  // Transcript principal
-  const best = segments.map(s => s[0]).join(' ');
-  transcripts.push(best);
-
-  // Pour chaque segment, permuter avec chacune de ses alternatives (k>0)
-  for (let s = 0; s < nSeg; s++) {
-    for (let k = 1; k < segments[s].length; k++) {
-      const parts = segments.map((seg, idx) => idx === s ? seg[k] : seg[0]);
-      transcripts.push(parts.join(' '));
-    }
-  }
-
-  // Aligne chaque transcript et prend l'union des erreurs
-  // Un mot est en erreur si AU MOINS UNE alternative le détecte comme erreur
   const errorStatus = new Array(state.words.length).fill('correct');
   const errorGot    = new Array(state.words.length).fill(null);
-
-  for (const transcript of transcripts) {
-    const spoken = transcript.split(/\s+/).map(normalise).filter(Boolean);
-    const ops = align(state.words, spoken);
-    const { status, errorDetail } = opsToStatus(ops, state.words.length);
-    for (let wi = 0; wi < state.words.length; wi++) {
-      if (status[wi] === 'omission') {
-        errorStatus[wi] = 'omission';
-      } else if (status[wi] === 'error' && errorStatus[wi] !== 'omission') {
+  let wi = 0;
+  for (const op of ops) {
+    if (op.type === 'ok') {
+      wi++;
+    } else if (op.type === 'sub') {
+      // Filtre les variations triviales produites par le moteur vocal
+      if (!isTrivialVariant(op.exp, op.got)) {
         errorStatus[wi] = 'error';
-        if (!errorGot[wi]) errorGot[wi] = errorDetail[wi];
+        errorGot[wi] = op.got;
       }
+      wi++;
+    } else if (op.type === 'del') {
+      errorStatus[wi] = 'omission';
+      wi++;
     }
   }
 
