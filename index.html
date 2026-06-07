@@ -178,6 +178,25 @@
         Commencer la séance
       </button>
     </div>
+    <details style="margin-top:14px;font-size:.85rem">
+      <summary style="cursor:pointer;color:var(--gray-400);font-weight:600">⚙️ Sauvegarde Google Sheets (optionnel)</summary>
+      <div style="margin-top:10px;padding:12px;background:var(--gray-100);border-radius:8px">
+        <label>URL de votre script Google Apps Script</label>
+        <input type="text" id="gas-url" placeholder="https://script.google.com/macros/s/…/exec" style="margin-bottom:6px">
+        <div style="font-size:.8rem;color:var(--gray-400)">
+          Les rapports seront automatiquement sauvegardés dans votre Google Sheet après chaque séance.
+          <a href="#" id="gas-url-help" style="color:var(--blue)">Comment obtenir l'URL ?</a>
+        </div>
+        <div id="gas-url-help-text" class="hidden" style="margin-top:8px;font-size:.8rem;color:var(--gray-700);line-height:1.5">
+          1. Ouvrez votre Google Spreadsheet → Extensions → Apps Script<br>
+          2. Copiez-collez le contenu de <code>Code.gs</code> et <code>appsscript.json</code><br>
+          3. Déployer → Nouveau déploiement → Application Web<br>
+          &nbsp;&nbsp;&nbsp;• Exécuter en tant que : <em>Moi</em><br>
+          &nbsp;&nbsp;&nbsp;• Accès : <em>Tout le monde</em><br>
+          4. Copiez l'URL générée et collez-la ici
+        </div>
+      </div>
+    </details>
   </div>
 
   <!-- ÉTAPE 2 : Lecture -->
@@ -226,6 +245,8 @@
       <span><span style="background:#fed7aa;padding:1px 6px;border-radius:4px;text-decoration:line-through">mot</span> Omission</span>
     </div>
     <div id="report-text" style="font-size:1.15rem;line-height:2.2;padding:16px;background:var(--gray-50);border-radius:var(--radius);border:1.5px solid var(--gray-200)"></div>
+
+    <div id="sheets-status" class="hidden" style="margin-top:10px;padding:8px 12px;border-radius:8px;font-size:.85rem;font-weight:600"></div>
 
     <div style="margin-top:14px">
       <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">Détail des erreurs :</div>
@@ -341,6 +362,16 @@ function bindSetup() {
   document.getElementById('btn-new-session').addEventListener('click', newSession);
   document.getElementById('btn-retry').addEventListener('click', retrySession);
   document.getElementById('btn-print').addEventListener('click', () => window.print());
+  document.getElementById('gas-url-help').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('gas-url-help-text').classList.toggle('hidden');
+  });
+  // Persistance URL Google Sheets
+  const saved = localStorage.getItem('gasUrl');
+  if (saved) document.getElementById('gas-url').value = saved;
+  document.getElementById('gas-url').addEventListener('change', e => {
+    localStorage.setItem('gasUrl', e.target.value.trim());
+  });
 }
 
 // ── Compatibilité micro ───────────────────────────────────────
@@ -413,7 +444,6 @@ function startRecording() {
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
         state.fullTranscript += ' ' + e.results[i][0].transcript;
-        updateHighlights();
       } else {
         interim = e.results[i][0].transcript;
         state.lastInterim = interim;
@@ -544,8 +574,14 @@ function updateHighlights() {
 //   • distance d'édition ≤ 1  : erreur de frappe isolée
 function isTrivialVariant(exp, got) {
   if (!got) return false;
+  // Pluriel / singulier : "tomate"/"tomates", "tulipe"/"tulipes"
+  if (exp + 's' === got || got + 's' === exp) return true;
+  if (exp + 'x' === got || got + 'x' === exp) return true;
+  // Préfixe / suffixe (ex. "dort"/"endort", "cache"/"cachent", "toit"/"toi")
   if (got.startsWith(exp) || got.endsWith(exp)) return true;
   if (exp.startsWith(got) || exp.endsWith(got)) return true;
+  // Homophones phonétiques déjà couverts par align(), garde comme filet de sécurité
+  if (phoneticNorm(exp) === phoneticNorm(got)) return true;
   // Distance d'édition ≤ 1
   const la = exp.length, lb = got.length;
   if (Math.abs(la - lb) > 1) return false;
@@ -625,6 +661,51 @@ function buildReport() {
 
   hide('step-recording');
   show('step-report');
+  saveToSheets();
+}
+
+// ── Sauvegarde automatique dans Google Sheets ─────────────────
+async function saveToSheets() {
+  const url = (localStorage.getItem('gasUrl') || '').trim();
+  if (!url) return;
+  const el = document.getElementById('sheets-status');
+  el.textContent = '⏳ Sauvegarde en cours…';
+  el.style.cssText = 'background:#dbeafe;color:#1e40af;display:block';
+
+  const total   = state.words.length;
+  const errLines = state.errors.map(e =>
+    `[${e.type === 'sub' ? 'Substitution' : 'Omission'}] ${e.expected}${e.got ? ' → ' + e.got : ''}`
+  ).join(' | ');
+  const annotated = state.rawWords.map((w, i) => {
+    const e = state.errors.find(e => e.index === i);
+    return e ? (e.type === 'sub' ? `[${w}→${e.got}]` : `[OMIS:${w}]`) : w;
+  }).join(' ');
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        studentName: state.student,
+        lang:        state.lang,
+        level:       state.level,
+        textTitle:   state.textTitle,
+        totalWords:  total,
+        errorCount:  state.errors.length,
+        errorDetails: errLines || 'Aucune erreur',
+        annotatedText: annotated
+      })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      el.textContent = '✓ Sauvegardé dans Google Sheets';
+      el.style.cssText = 'background:#dcfce7;color:#166534;display:block';
+    } else {
+      throw new Error(data.error || 'Erreur inconnue');
+    }
+  } catch (err) {
+    el.textContent = '⚠️ Impossible de sauvegarder : ' + err.message;
+    el.style.cssText = 'background:#fff7ed;color:#9a3412;display:block';
+  }
 }
 
 function annotatedHtml(status) {
