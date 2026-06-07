@@ -14,36 +14,20 @@
       --gray-400: #94a3b8; --gray-700: #334155; --gray-900: #0f172a;
       --radius: 10px; --shadow: 0 2px 12px rgba(0,0,0,.08);
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--gray-50); color: var(--gray-900);
-      min-height: 100vh; padding: 16px;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); min-height: 100vh; padding: 16px; }
     h1 { font-size: 1.4rem; font-weight: 700; }
     h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 12px; }
     label { font-size: .85rem; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 4px; }
-    input[type=text], select, textarea {
-      width: 100%; padding: 9px 12px;
-      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
-      font-size: .95rem; background: #fff; transition: border-color .15s;
-    }
+    input[type=text], select, textarea { width: 100%; padding: 9px 12px; border: 1.5px solid var(--gray-200); border-radius: var(--radius); font-size: .95rem; background: #fff; transition: border-color .15s; }
     input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); }
     textarea { resize: vertical; min-height: 100px; font-family: inherit; line-height: 1.6; }
     .app { max-width: 780px; margin: 0 auto; }
-    header {
-      background: var(--blue); color: #fff;
-      border-radius: var(--radius); padding: 16px 20px;
-      margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
-    }
+    header { background: var(--blue); color: #fff; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+    header .spacer { flex: 1; }
     .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 500px) { .row-2 { grid-template-columns: 1fr; } }
-    .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 10px 18px; border-radius: var(--radius);
-      font-size: .9rem; font-weight: 600; cursor: pointer;
-      border: none; transition: opacity .15s, transform .1s;
-    }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: var(--radius); font-size: .9rem; font-weight: 600; cursor: pointer; border: none; transition: opacity .15s, transform .1s; }
     .btn:active { transform: scale(.97); }
     .btn:disabled { opacity: .45; cursor: not-allowed; }
     .btn-primary { background: var(--blue);  color: #fff; }
@@ -51,67 +35,51 @@
     .btn-success { background: var(--green); color: #fff; }
     .btn-outline { background: #fff; color: var(--blue); border: 1.5px solid var(--blue); }
     .btn-gray    { background: var(--gray-200); color: var(--gray-700); }
+    .btn-white   { background: rgba(255,255,255,.15); color: #fff; border: 1.5px solid rgba(255,255,255,.4); }
+    .btn-white:hover { background: rgba(255,255,255,.25); }
     .btn-group   { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    .rec-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #fee2e2; color: var(--red);
-      border-radius: 999px; padding: 4px 12px; font-size: .82rem; font-weight: 700;
-    }
+    .rec-badge { display: inline-flex; align-items: center; gap: 6px; background: #fee2e2; color: var(--red); border-radius: 999px; padding: 4px 12px; font-size: .82rem; font-weight: 700; }
     .rec-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    #reading-area {
-      font-size: 1.25rem; line-height: 2.2; padding: 16px;
-      background: var(--gray-50); border-radius: var(--radius);
-      border: 1.5px solid var(--gray-200); min-height: 120px;
-    }
+    #reading-area { font-size: 1.25rem; line-height: 2.2; padding: 16px; background: var(--gray-50); border-radius: var(--radius); border: 1.5px solid var(--gray-200); min-height: 120px; }
     .word { display: inline; padding: 2px 4px; border-radius: 4px; }
     .word-correct  { background: transparent; }
     .word-error    { background: #fecaca; color: var(--red); font-weight: 700; text-decoration: underline wavy var(--red); }
     .word-omission { background: #fed7aa; color: var(--orange); text-decoration: line-through; }
-    #live-transcript {
-      font-size: .9rem; color: var(--gray-700); background: var(--gray-100);
-      border-radius: var(--radius); padding: 10px 14px; min-height: 42px;
-      margin-top: 12px; border: 1px dashed var(--gray-400); font-style: italic;
-    }
+    #live-transcript { font-size: .9rem; color: var(--gray-700); background: var(--gray-100); border-radius: var(--radius); padding: 10px 14px; min-height: 42px; margin-top: 12px; border: 1px dashed var(--gray-400); font-style: italic; }
     .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-    .stat-box {
-      flex: 1; min-width: 110px; background: var(--gray-50);
-      border: 1.5px solid var(--gray-200); border-radius: var(--radius);
-      padding: 12px; text-align: center;
-    }
+    .stat-box { flex: 1; min-width: 110px; background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 12px; text-align: center; }
     .stat-num { font-size: 1.8rem; font-weight: 800; }
     .stat-lbl { font-size: .75rem; color: var(--gray-400); text-transform: uppercase; letter-spacing: .04em; }
     .stat-num.good { color: var(--green); }
     .stat-num.warn { color: var(--orange); }
     .stat-num.bad  { color: var(--red); }
-    .error-item {
-      display: flex; gap: 10px; align-items: flex-start;
-      padding: 8px 12px; border-radius: 8px;
-      background: #fff7ed; border: 1px solid #fed7aa;
-      margin-bottom: 6px; font-size: .9rem;
-    }
+    .error-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border-radius: 8px; background: #fff7ed; border: 1px solid #fed7aa; margin-bottom: 6px; font-size: .9rem; }
     .error-type { font-size: .75rem; font-weight: 700; text-transform: uppercase; }
     .error-type.sub { color: var(--red); }
     .error-type.om  { color: var(--orange); }
-    .copy-box {
-      background: var(--gray-100); border-radius: var(--radius);
-      padding: 14px; margin-top: 14px; font-size: .85rem;
-    }
+    .copy-box { background: var(--gray-100); border-radius: var(--radius); padding: 14px; margin-top: 14px; font-size: .85rem; }
     .copy-box h3 { font-size: .9rem; font-weight: 700; margin-bottom: 8px; }
     #copy-status { font-size: .85rem; color: var(--green); font-weight: 600; margin-top: 6px; min-height: 20px; }
     .hidden { display: none !important; }
     .tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 2px solid var(--gray-200); }
-    .tab {
-      padding: 8px 16px; cursor: pointer; font-size: .9rem; font-weight: 600;
-      border-radius: var(--radius) var(--radius) 0 0;
-      color: var(--gray-400); background: none; border: none;
-      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s;
-    }
+    .tab { padding: 8px 16px; cursor: pointer; font-size: .9rem; font-weight: 600; border-radius: var(--radius) var(--radius) 0 0; color: var(--gray-400); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color .15s; }
     .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
     .tab-panel.hidden { display: none; }
     .notice { background: var(--blue-lt); border-radius: var(--radius); padding: 10px 14px; font-size: .85rem; color: #1e40af; margin-bottom: 12px; }
     .notice.warn { background: #fff7ed; color: #9a3412; }
-
+    /* Modal enseignant */
+    #teacher-modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+    #teacher-modal .modal-box { background: #fff; border-radius: var(--radius); width: 100%; max-width: 900px; padding: 24px; box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+    .teacher-filter { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+    .teacher-filter select { max-width: 200px; }
+    .results-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .results-table th { background: var(--gray-100); text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--gray-200); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--gray-700); }
+    .results-table td { padding: 8px 10px; border-bottom: 1px solid var(--gray-100); }
+    .results-table tr:hover td { background: var(--gray-50); }
+    .acc-good { color: var(--green); font-weight: 700; }
+    .acc-warn { color: var(--orange); font-weight: 700; }
+    .acc-bad  { color: var(--red);   font-weight: 700; }
     @media print {
       header, #step-setup, #step-recording, .btn-group, .copy-box { display: none !important; }
       #step-report { display: block !important; box-shadow: none; }
@@ -122,18 +90,48 @@
 <div class="app">
 
   <header>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
     </svg>
     <div>
       <h1>Outil de lecture enregistrée</h1>
       <div style="font-size:.8rem;opacity:.85">LGB Primaire — Évaluation de la lecture orale</div>
     </div>
+    <div class="spacer"></div>
+    <button class="btn btn-white" id="btn-teacher" style="font-size:.82rem;padding:7px 12px">
+      📊 Vue enseignant
+    </button>
   </header>
 
   <!-- ÉTAPE 1 : Paramètres -->
   <div id="step-setup" class="card">
     <h2>1 · Paramètres</h2>
+
+    <!-- Classe & Élève -->
+    <div class="row-2" style="margin-bottom:14px">
+      <div>
+        <label>Classe</label>
+        <select id="classe-select"><option value="">— Chargement… —</option></select>
+      </div>
+      <div>
+        <label>Prénom</label>
+        <select id="student-select" disabled><option value="">— Choisir la classe —</option></select>
+      </div>
+    </div>
+    <div id="student-fallback" class="hidden" style="margin-bottom:14px">
+      <div class="notice warn" style="margin-bottom:8px">⚠️ Liste des élèves non disponible — saisissez manuellement.</div>
+      <div class="row-2">
+        <div>
+          <label>Classe</label>
+          <input type="text" id="classe-manual" placeholder="Ex : CE2A">
+        </div>
+        <div>
+          <label>Prénom</label>
+          <input type="text" id="student-manual" placeholder="Ex : Emma">
+        </div>
+      </div>
+    </div>
+
     <div class="row-2">
       <div>
         <label>Langue / Language</label>
@@ -151,10 +149,7 @@
         </select>
       </div>
     </div>
-    <div style="margin-top:14px">
-      <label>Élève</label>
-      <input type="text" id="student-name" placeholder="Prénom Nom">
-    </div>
+
     <div style="margin-top:16px">
       <div class="tabs">
         <button class="tab active" data-tab="library">Bibliothèque de textes</button>
@@ -184,9 +179,7 @@
   <div id="step-recording" class="card hidden">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <h2 style="margin:0">2 · Lecture</h2>
-      <span id="rec-badge" class="rec-badge hidden">
-        <span class="rec-dot"></span> Enregistrement
-      </span>
+      <span id="rec-badge" class="rec-badge hidden"><span class="rec-dot"></span> Enregistrement</span>
     </div>
     <div id="compat-notice" class="notice hidden warn"></div>
     <div style="font-size:.85rem;color:var(--gray-400);margin-bottom:8px" id="session-info"></div>
@@ -234,10 +227,9 @@
       <div id="error-list"></div>
     </div>
 
-    <!-- Copier le rapport -->
     <div class="copy-box">
       <h3>📋 Copier le rapport</h3>
-      <p style="color:var(--gray-700);margin-bottom:10px;font-size:.85rem">Copiez le résumé pour le coller dans un email, Google Docs ou Google Sheets.</p>
+      <p style="color:var(--gray-700);margin-bottom:10px;font-size:.85rem">Copiez le résumé pour le coller dans un email ou Google Docs.</p>
       <button class="btn btn-success" id="btn-copy">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
         Copier le rapport
@@ -255,6 +247,44 @@
     </div>
   </div>
 
+</div>
+
+<!-- MODAL VUE ENSEIGNANT -->
+<div id="teacher-modal" class="hidden">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">📊 Vue Enseignant</h2>
+      <button class="btn btn-gray" id="btn-close-teacher" style="padding:6px 12px">✕ Fermer</button>
+    </div>
+
+    <div class="teacher-filter">
+      <div>
+        <label>Filtrer par classe</label>
+        <select id="teacher-classe-filter"><option value="">Toutes les classes</option></select>
+      </div>
+      <div>
+        <label>Filtrer par élève</label>
+        <select id="teacher-student-filter"><option value="">Tous les élèves</option></select>
+      </div>
+      <a href="https://docs.google.com/spreadsheets/d/16t0tHXOK0iBu-0Inil-8Tez6fDGvpRzZ02t0Irp9UK4/edit" target="_blank" class="btn btn-outline" style="font-size:.82rem;padding:7px 12px;align-self:flex-end">
+        📄 Ouvrir le Google Sheet
+      </a>
+    </div>
+
+    <div id="teacher-loading" style="text-align:center;padding:24px;color:var(--gray-400)">Chargement des données…</div>
+    <div id="teacher-error" class="hidden notice warn"></div>
+    <div id="teacher-table-wrap" class="hidden" style="overflow-x:auto">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Classe</th><th>Élève</th><th>Niveau</th><th>Texte</th><th>Mots</th><th>Erreurs</th><th>Précision</th>
+          </tr>
+        </thead>
+        <tbody id="teacher-tbody"></tbody>
+      </table>
+      <div id="teacher-empty" class="hidden" style="text-align:center;padding:20px;color:var(--gray-400)">Aucune séance enregistrée.</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -286,12 +316,15 @@ const LIBRARY = [
     text:'Before the printing press was invented, books had to be copied by hand, which took months or even years. In the fifteenth century, Johannes Gutenberg developed a machine that could print pages quickly using moveable metal letters. This invention transformed the world: knowledge could be shared widely for the first time. Books became cheaper, and more people learned to read.' }
 ];
 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxkCx89cbJCLZvt6xiesHPHRkUCv5HSLxup0nwXXlpPv0bA23gPIUrDYtznD870npVGkQ/exec';
+
 // ── État ─────────────────────────────────────────────────────
 let state = {
-  lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
+  classe:'', lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
   words:[], rawWords:[], recognition:null, isRecording:false,
   fullTranscript:'', lastInterim:'', errors:[], wordStatus:[]
 };
+let classData = []; // [{name, students:[]}]
 
 // ── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -299,16 +332,63 @@ document.addEventListener('DOMContentLoaded', () => {
   bindTabs();
   bindSetup();
   checkSpeechSupport();
+  fetchStudents();
 });
 
+// ── Chargement des classes depuis GAS ────────────────────────
+async function fetchStudents() {
+  try {
+    const resp = await fetch(GAS_URL + '?action=students');
+    const data = await resp.json();
+    if (Array.isArray(data) && data.length > 0) {
+      classData = data;
+      buildClassDropdown();
+    } else {
+      showStudentFallback();
+    }
+  } catch {
+    showStudentFallback();
+  }
+}
+
+function buildClassDropdown() {
+  const sel = document.getElementById('classe-select');
+  sel.innerHTML = '<option value="">— Choisir une classe —</option>';
+  classData.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.name; opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', onClassChange);
+}
+
+function onClassChange() {
+  const name = document.getElementById('classe-select').value;
+  const ssel = document.getElementById('student-select');
+  ssel.innerHTML = '<option value="">— Choisir un prénom —</option>';
+  ssel.disabled = !name;
+  const cls = classData.find(c => c.name === name);
+  if (cls) {
+    cls.students.forEach(s => {
+      const opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+      ssel.appendChild(opt);
+    });
+  }
+}
+
+function showStudentFallback() {
+  document.getElementById('classe-select').closest('.row-2').classList.add('hidden');
+  document.getElementById('student-fallback').classList.remove('hidden');
+}
+
+// ── Bibliothèque ─────────────────────────────────────────────
 function refreshTextSelect() {
   const sel = document.getElementById('text-select');
   const lang = document.getElementById('lang-select').value;
   sel.innerHTML = '';
   LIBRARY.filter(t => t.lang === lang).forEach(t => {
     const opt = document.createElement('option');
-    opt.value = t.id;
-    opt.textContent = `[${t.level}] ${t.title}`;
+    opt.value = t.id; opt.textContent = `[${t.level}] ${t.title}`;
     sel.appendChild(opt);
   });
   updatePreview();
@@ -343,6 +423,10 @@ function bindSetup() {
   document.getElementById('btn-new-session').addEventListener('click', newSession);
   document.getElementById('btn-retry').addEventListener('click', retrySession);
   document.getElementById('btn-print').addEventListener('click', () => window.print());
+  document.getElementById('btn-teacher').addEventListener('click', openTeacherView);
+  document.getElementById('btn-close-teacher').addEventListener('click', () => hide('teacher-modal'));
+  document.getElementById('teacher-classe-filter').addEventListener('change', filterTeacherTable);
+  document.getElementById('teacher-student-filter').addEventListener('change', filterTeacherTable);
 }
 
 // ── Compatibilité micro ───────────────────────────────────────
@@ -350,22 +434,31 @@ function checkSpeechSupport() {
   if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
     const n = document.getElementById('compat-notice');
     n.classList.remove('hidden');
-    n.innerHTML = '⚠️ Reconnaissance vocale non disponible sur ce navigateur. Utilisez <strong>Chrome</strong> ou <strong>Edge</strong>.';
+    n.innerHTML = '⚠️ Reconnaissance vocale non disponible. Utilisez <strong>Chrome</strong> ou <strong>Edge</strong>.';
   }
 }
 
 // ── Démarrer séance ──────────────────────────────────────────
 function startSession() {
-  state.lang    = document.getElementById('lang-select').value;
-  state.level   = document.getElementById('level-select').value;
-  state.student = document.getElementById('student-name').value.trim();
+  state.lang  = document.getElementById('lang-select').value;
+  state.level = document.getElementById('level-select').value;
+
+  const fallback = !document.getElementById('student-fallback').classList.contains('hidden');
+  if (fallback) {
+    state.classe  = document.getElementById('classe-manual').value.trim();
+    state.student = document.getElementById('student-manual').value.trim();
+  } else {
+    state.classe  = document.getElementById('classe-select').value;
+    state.student = document.getElementById('student-select').value;
+  }
+
+  if (!state.student) { alert('Veuillez sélectionner ou saisir le prénom de l\'élève.'); return; }
 
   const isLib = document.querySelector('.tab.active').dataset.tab === 'library';
   if (isLib) {
     const item = LIBRARY.find(t => t.id === document.getElementById('text-select').value);
     if (!item) { alert('Veuillez choisir un texte.'); return; }
-    state.textTitle = item.title;
-    state.originalText = item.text;
+    state.textTitle = item.title; state.originalText = item.text;
   } else {
     state.originalText = document.getElementById('custom-text').value.trim();
     state.textTitle = document.getElementById('custom-title').value.trim() || 'Texte personnalisé';
@@ -377,15 +470,14 @@ function startSession() {
   resetToRecording();
   show('step-recording');
   hide('step-setup');
+  const who = [state.classe, state.student].filter(Boolean).join(' · ');
   document.getElementById('session-info').textContent =
-    `${state.student ? state.student + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+    `${who ? who + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
 }
 
 // ── Enregistrement ───────────────────────────────────────────
 function resetToRecording() {
-  state.fullTranscript = '';
-  state.lastInterim = '';
-  state.errors = [];
+  state.fullTranscript = ''; state.lastInterim = ''; state.errors = [];
   renderWords([]);
   document.getElementById('live-transcript').textContent = 'En attente du microphone…';
   document.getElementById('rec-badge').classList.add('hidden');
@@ -397,7 +489,7 @@ function resetToRecording() {
 function startRecording() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    document.getElementById('live-transcript').textContent = '(Mode manuel — reconnaisance vocale non disponible)';
+    document.getElementById('live-transcript').textContent = '(Reconnaissance vocale non disponible)';
     state.isRecording = true;
     document.getElementById('btn-record').disabled = true;
     document.getElementById('btn-stop-record').disabled = false;
@@ -408,36 +500,28 @@ function startRecording() {
   rec.lang = state.lang === 'fr' ? 'fr-FR' : 'en-GB';
   rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
   let interim = '';
+  let gotResult = false;
+  const diagTimeout = setTimeout(() => {
+    if (!gotResult && state.isRecording)
+      document.getElementById('live-transcript').textContent =
+        '⚠️ Aucune transcription reçue. Le réseau bloque peut-être le service vocal Google. Essayez en partage de connexion mobile.';
+  }, 6000);
   rec.onresult = e => {
-    gotResult = true;
-    clearTimeout(diagTimeout);
-    interim = '';
+    gotResult = true; clearTimeout(diagTimeout); interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        state.fullTranscript += ' ' + e.results[i][0].transcript;
-      } else {
-        interim = e.results[i][0].transcript;
-        state.lastInterim = interim;
-      }
+      if (e.results[i].isFinal) { state.fullTranscript += ' ' + e.results[i][0].transcript; }
+      else { interim = e.results[i][0].transcript; state.lastInterim = interim; }
     }
     document.getElementById('live-transcript').textContent =
       (state.fullTranscript + ' ' + interim).trim() || '…';
   };
-  let gotResult = false;
-  const diagTimeout = setTimeout(() => {
-    if (!gotResult && state.isRecording) {
-      document.getElementById('live-transcript').textContent =
-        '⚠️ Aucune transcription reçue. Le service vocal Google est peut-être bloqué par le réseau de l\'école. Essayez depuis un réseau WiFi personnel (partage de connexion téléphone).';
-    }
-  }, 6000);
-
   rec.onerror = e => {
     clearTimeout(diagTimeout);
     const msgs = {
-      'not-allowed':       '🔒 Microphone refusé — autorisez-le dans les paramètres Chrome.',
-      'network':           '🌐 Erreur réseau — le service vocal Google est bloqué. Essayez avec un partage de connexion mobile.',
-      'service-not-allowed': '🚫 Service vocal désactivé sur cet appareil (politique de l\'école).',
-      'no-speech':         null
+      'not-allowed':         '🔒 Microphone refusé — autorisez-le dans les paramètres Chrome.',
+      'network':             '🌐 Erreur réseau — service vocal bloqué. Essayez avec un partage de connexion mobile.',
+      'service-not-allowed': '🚫 Service vocal désactivé sur cet appareil.',
+      'no-speech':           null
     };
     const msg = msgs[e.error];
     if (msg) document.getElementById('live-transcript').textContent = msg;
@@ -451,11 +535,7 @@ function startRecording() {
 
 function stopRecording() {
   state.isRecording = false;
-  // Capture le dernier segment intermédiaire avant l'arrêt (évite l'omission du dernier mot)
-  if (state.lastInterim) {
-    state.fullTranscript += ' ' + state.lastInterim;
-    state.lastInterim = '';
-  }
+  if (state.lastInterim) { state.fullTranscript += ' ' + state.lastInterim; state.lastInterim = ''; }
   if (state.recognition) { state.recognition.stop(); state.recognition = null; }
   document.getElementById('rec-badge').classList.add('hidden');
   document.getElementById('btn-record').disabled   = false;
@@ -463,277 +543,221 @@ function stopRecording() {
   buildReport();
 }
 
-// ── Normalisation phonétique ──────────────────────────────────
-// Réduit un mot à sa forme phonétique approchée pour comparer les homophones.
-// Ex. FR : "lit" = "lis" = "lie" → "li"  |  "chaud" = "chaux" → "cho"
+// ── Phonétique & alignement ───────────────────────────────────
 function phoneticNorm(w) {
-  if (state.lang === 'en') {
-    // Anglais : simplification minimale des voyelles finales silencieuses
-    return w.replace(/e$/, '').replace(/(.)\1/g, '$1');
-  }
-  // Français
+  if (state.lang === 'en') return w.replace(/e$/, '').replace(/(.)\1/g, '$1');
   return w
-    .replace(/eau|au/g, 'o')
-    .replace(/ai|ei|ê/g, 'è')
-    .replace(/ez$|er$/, 'é')
-    .replace(/ou/g, 'u')
-    .replace(/oi/g, 'oa')
-    .replace(/eu|œu|œ/g, 'e')
-    .replace(/ph/g, 'f')
-    .replace(/qu/g, 'k')
-    .replace(/c(?=[eèéêëiy])/g, 's')
-    .replace(/g(?=[eèéêëiy])/g, 'j')
-    .replace(/ç/g, 's')
-    .replace(/[àâ]/g, 'a')
-    .replace(/[éèêë]/g, 'e')
-    .replace(/[îï]/g, 'i')
-    .replace(/[ôö]/g, 'o')
-    .replace(/[ùûü]/g, 'u')
-    .replace(/an|am|en|em/g, 'an')
-    .replace(/ain|ein|ien|in|im/g, 'in')
-    .replace(/on|om/g, 'on')
-    .replace(/un|um/g, 'un')
-    .replace(/ent$/, '')       // -ent verbal muet
-    .replace(/[stdxz]$/, ''); // consonnes finales muettes
+    .replace(/eau|au/g,'o').replace(/ai|ei|ê/g,'è').replace(/ez$|er$/,'é')
+    .replace(/ou/g,'u').replace(/oi/g,'oa').replace(/eu|œu|œ/g,'e')
+    .replace(/ph/g,'f').replace(/qu/g,'k')
+    .replace(/c(?=[eèéêëiy])/g,'s').replace(/g(?=[eèéêëiy])/g,'j').replace(/ç/g,'s')
+    .replace(/[àâ]/g,'a').replace(/[éèêë]/g,'e').replace(/[îï]/g,'i')
+    .replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u')
+    .replace(/an|am|en|em/g,'an').replace(/ain|ein|ien|in|im/g,'in')
+    .replace(/on|om/g,'on').replace(/un|um/g,'un')
+    .replace(/ent$/,'').replace(/[stdxz]$/,'');
 }
 
-// ── Alignement Levenshtein ────────────────────────────────────
 function align(expected, spoken) {
-  const n = expected.length, m = spoken.length;
-  const SUB = 1, DEL = 1, INS = 0.5;
-  const dp = Array.from({length:n+1}, () => new Float32Array(m+1));
-  for (let i=1;i<=n;i++) dp[i][0]=i*DEL;
-  for (let j=1;j<=m;j++) dp[0][j]=j*INS;
-  for (let i=1;i<=n;i++) for (let j=1;j<=m;j++) {
-    // Considère homophones comme identiques
-    const ok = expected[i-1]===spoken[j-1] ||
-               phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
-    dp[i][j]=Math.min(dp[i-1][j-1]+(ok?0:SUB), dp[i-1][j]+DEL, dp[i][j-1]+INS);
+  const n=expected.length, m=spoken.length, SUB=1, DEL=1, INS=0.5;
+  const dp=Array.from({length:n+1},()=>new Float32Array(m+1));
+  for(let i=1;i<=n;i++) dp[i][0]=i*DEL;
+  for(let j=1;j<=m;j++) dp[0][j]=j*INS;
+  for(let i=1;i<=n;i++) for(let j=1;j<=m;j++){
+    const ok=expected[i-1]===spoken[j-1]||phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
+    dp[i][j]=Math.min(dp[i-1][j-1]+(ok?0:SUB),dp[i-1][j]+DEL,dp[i][j-1]+INS);
   }
-  const ops=[]; let i=n, j=m;
-  while (i>0||j>0) {
-    if (i>0&&j>0) {
-      const ok=expected[i-1]===spoken[j-1] ||
-               phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
-      if (dp[i][j]===dp[i-1][j-1]+(ok?0:SUB)) { ops.unshift({type:ok?'ok':'sub',exp:expected[i-1],got:spoken[j-1]}); i--;j--;continue; }
+  const ops=[];let i=n,j=m;
+  while(i>0||j>0){
+    if(i>0&&j>0){
+      const ok=expected[i-1]===spoken[j-1]||phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
+      if(dp[i][j]===dp[i-1][j-1]+(ok?0:SUB)){ops.unshift({type:ok?'ok':'sub',exp:expected[i-1],got:spoken[j-1]});i--;j--;continue;}
     }
-    if (i>0&&dp[i][j]===dp[i-1][j]+DEL) { ops.unshift({type:'del',exp:expected[i-1],got:null}); i--; }
-    else { ops.unshift({type:'ins',exp:null,got:spoken[j-1]}); j--; }
+    if(i>0&&dp[i][j]===dp[i-1][j]+DEL){ops.unshift({type:'del',exp:expected[i-1],got:null});i--;}
+    else{ops.unshift({type:'ins',exp:null,got:spoken[j-1]});j--;}
   }
   return ops;
 }
 
-function updateHighlights() {
-  const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
-  const ops = align(state.words, spoken);
-  const status = new Array(state.words.length).fill('correct');
-  let wi = 0;
-  for (const op of ops) {
-    if (op.type === 'ok')  { wi++; }
-    else if (op.type === 'sub') { status[wi] = 'error';    wi++; }
-    else if (op.type === 'del') { status[wi] = 'omission'; wi++; }
-  }
-  renderWords(status);
-}
-
-// Retourne vrai si la différence entre exp et got est trop petite
-// pour être une vraie erreur de lecture (bruit de transcription).
-// Cas couverts :
-//   • exp est préfixe de got  : "cache" / "cachent"
-//   • exp est suffixe de got  : "dort"  / "endort"
-//   • got est préfixe de exp  : "endort"/ "dort"  (sens inverse)
-//   • distance d'édition ≤ 1  : erreur de frappe isolée
 function isTrivialVariant(exp, got) {
   if (!got) return false;
-  // Pluriel / singulier : "tomate"/"tomates", "tulipe"/"tulipes"
-  if (exp + 's' === got || got + 's' === exp) return true;
-  if (exp + 'x' === got || got + 'x' === exp) return true;
-  // Préfixe / suffixe (ex. "dort"/"endort", "cache"/"cachent", "toit"/"toi")
-  if (got.startsWith(exp) || got.endsWith(exp)) return true;
-  if (exp.startsWith(got) || exp.endsWith(got)) return true;
-  // Homophones phonétiques déjà couverts par align(), garde comme filet de sécurité
-  if (phoneticNorm(exp) === phoneticNorm(got)) return true;
-  // Distance d'édition ≤ 1
-  const la = exp.length, lb = got.length;
-  if (Math.abs(la - lb) > 1) return false;
-  const dp = Array.from({length: la + 1}, (_, i) =>
-    Array.from({length: lb + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
-  for (let i = 1; i <= la; i++)
-    for (let j = 1; j <= lb; j++)
-      dp[i][j] = exp[i-1] === got[j-1] ? dp[i-1][j-1]
-               : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
-  return dp[la][lb] <= 1;
+  if (exp+'s'===got||got+'s'===exp) return true;
+  if (exp+'x'===got||got+'x'===exp) return true;
+  if (got.startsWith(exp)||got.endsWith(exp)) return true;
+  if (exp.startsWith(got)||exp.endsWith(got)) return true;
+  if (phoneticNorm(exp)===phoneticNorm(got)) return true;
+  const la=exp.length,lb=got.length;
+  if(Math.abs(la-lb)>1) return false;
+  const dp=Array.from({length:la+1},(_,i)=>Array.from({length:lb+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=la;i++) for(let j=1;j<=lb;j++)
+    dp[i][j]=exp[i-1]===got[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+  return dp[la][lb]<=1;
 }
 
 // ── Rapport ──────────────────────────────────────────────────
 function buildReport() {
   const spoken = state.fullTranscript.split(/\s+/).map(normalise).filter(Boolean);
   const ops = align(state.words, spoken);
-
   const errorStatus = new Array(state.words.length).fill('correct');
   const errorGot    = new Array(state.words.length).fill(null);
-  let wi = 0;
-  for (const op of ops) {
-    if (op.type === 'ok') {
-      wi++;
-    } else if (op.type === 'sub') {
-      // Filtre les variations triviales produites par le moteur vocal
-      if (!isTrivialVariant(op.exp, op.got)) {
-        errorStatus[wi] = 'error';
-        errorGot[wi] = op.got;
-      }
-      wi++;
-    } else if (op.type === 'del') {
-      errorStatus[wi] = 'omission';
-      wi++;
-    }
+  let wi=0;
+  for(const op of ops){
+    if(op.type==='ok'){wi++;}
+    else if(op.type==='sub'){if(!isTrivialVariant(op.exp,op.got)){errorStatus[wi]='error';errorGot[wi]=op.got;}wi++;}
+    else if(op.type==='del'){errorStatus[wi]='omission';wi++;}
   }
-
-  state.wordStatus = errorStatus;
-  state.errors = [];
-  for (let wi = 0; wi < state.words.length; wi++) {
-    if (errorStatus[wi] === 'error') {
-      state.errors.push({ index: wi, type: 'sub', expected: state.rawWords[wi], got: errorGot[wi] });
-    } else if (errorStatus[wi] === 'omission') {
-      state.errors.push({ index: wi, type: 'om', expected: state.rawWords[wi], got: null });
-    }
+  state.wordStatus=errorStatus;
+  state.errors=[];
+  for(let wi=0;wi<state.words.length;wi++){
+    if(errorStatus[wi]==='error') state.errors.push({index:wi,type:'sub',expected:state.rawWords[wi],got:errorGot[wi]});
+    else if(errorStatus[wi]==='omission') state.errors.push({index:wi,type:'om',expected:state.rawWords[wi],got:null});
   }
-
   renderWords(errorStatus);
 
-  const total = state.words.length, errCount = state.errors.length;
-  const subs  = state.errors.filter(e => e.type === 'sub').length;
-  const oms   = state.errors.filter(e => e.type === 'om').length;
-  const acc   = total > 0 ? Math.round(((total - errCount) / total) * 100) : 100;
+  const total=state.words.length, errCount=state.errors.length;
+  const subs=state.errors.filter(e=>e.type==='sub').length, oms=state.errors.filter(e=>e.type==='om').length;
+  const acc=total>0?Math.round(((total-errCount)/total)*100):100;
+  document.getElementById('stat-total').textContent=total;
+  const se=document.getElementById('stat-errors');se.textContent=errCount;
+  se.className='stat-num '+(errCount===0?'good':errCount<total*.1?'warn':'bad');
+  const sa=document.getElementById('stat-accuracy');sa.textContent=acc+'%';
+  sa.className='stat-num '+(acc>=95?'good':acc>=85?'warn':'bad');
+  document.getElementById('stat-sub').textContent=subs;
+  document.getElementById('stat-om').textContent=oms;
 
-  document.getElementById('stat-total').textContent = total;
-  const se = document.getElementById('stat-errors'); se.textContent = errCount;
-  se.className = 'stat-num ' + (errCount === 0 ? 'good' : errCount < total * .1 ? 'warn' : 'bad');
-  const sa = document.getElementById('stat-accuracy'); sa.textContent = acc + '%';
-  sa.className = 'stat-num ' + (acc >= 95 ? 'good' : acc >= 85 ? 'warn' : 'bad');
-  document.getElementById('stat-sub').textContent = subs;
-  document.getElementById('stat-om').textContent  = oms;
+  const who=[state.classe,state.student].filter(Boolean).join(' · ');
+  document.getElementById('report-header').textContent=
+    `${who?who+' · ':''}${state.lang==='fr'?'Français':'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
+  document.getElementById('report-text').innerHTML=annotatedHtml(errorStatus);
 
-  document.getElementById('report-header').textContent =
-    `${state.student ? state.student + ' · ' : ''}${state.lang === 'fr' ? 'Français' : 'English'} · Niveau ${state.level} · « ${state.textTitle} »`;
-
-  document.getElementById('report-text').innerHTML = annotatedHtml(errorStatus);
-
-  const list = document.getElementById('error-list'); list.innerHTML = '';
-  if (!state.errors.length) {
-    list.innerHTML = '<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
+  const list=document.getElementById('error-list');list.innerHTML='';
+  if(!state.errors.length){
+    list.innerHTML='<div style="color:var(--green);font-weight:600">Aucune erreur détectée !</div>';
   } else {
-    state.errors.forEach(e => {
-      const d = document.createElement('div'); d.className = 'error-item';
-      d.innerHTML = `<div><div class="error-type ${e.type === 'sub' ? 'sub' : 'om'}">${e.type === 'sub' ? 'Substitution' : 'Omission'}</div><div>Attendu : <strong>${e.expected}</strong> ${e.got ? `→ Lu : <em>${e.got}</em>` : '→ <em>non lu</em>'}</div></div>`;
+    state.errors.forEach(e=>{
+      const d=document.createElement('div');d.className='error-item';
+      d.innerHTML=`<div><div class="error-type ${e.type==='sub'?'sub':'om'}">${e.type==='sub'?'Substitution':'Omission'}</div><div>Attendu : <strong>${e.expected}</strong> ${e.got?`→ Lu : <em>${e.got}</em>`:'→ <em>non lu</em>'}</div></div>`;
       list.appendChild(d);
     });
   }
-
-  hide('step-recording');
-  show('step-report');
+  hide('step-recording'); show('step-report');
   saveToSheets();
 }
 
-// ── Sauvegarde automatique dans Google Sheets ─────────────────
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxkCx89cbJCLZvt6xiesHPHRkUCv5HSLxup0nwXXlpPv0bA23gPIUrDYtznD870npVGkQ/exec';
-
-async function saveToSheets() {
-  const url = GAS_URL;
-  const el = document.getElementById('sheets-status');
-  el.textContent = '⏳ Sauvegarde en cours…';
-  el.style.cssText = 'background:#dbeafe;color:#1e40af;display:block';
-
-  const total   = state.words.length;
-  const errLines = state.errors.map(e =>
-    `[${e.type === 'sub' ? 'Substitution' : 'Omission'}] ${e.expected}${e.got ? ' → ' + e.got : ''}`
-  ).join(' | ');
-  const annotated = state.rawWords.map((w, i) => {
-    const e = state.errors.find(e => e.index === i);
-    return e ? (e.type === 'sub' ? `[${w}→${e.got}]` : `[OMIS:${w}]`) : w;
-  }).join(' ');
-
-  try {
-    // no-cors + text/plain évite le preflight CORS bloqué par GAS
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        studentName: state.student,
-        lang:        state.lang,
-        level:       state.level,
-        textTitle:   state.textTitle,
-        totalWords:  total,
-        errorCount:  state.errors.length,
-        errorDetails: errLines || 'Aucune erreur',
-        annotatedText: annotated
-      })
-    });
-    // Avec no-cors la réponse est opaque — on suppose le succès si pas d'exception
-    el.textContent = '✓ Rapport envoyé à Google Sheets';
-    el.style.cssText = 'background:#dcfce7;color:#166534;display:block';
-  } catch (err) {
-    el.textContent = '⚠️ Impossible d\'envoyer : vérifiez l\'URL du script et la connexion réseau.';
-    el.style.cssText = 'background:#fff7ed;color:#9a3412;display:block';
-  }
-}
-
 function annotatedHtml(status) {
-  return state.rawWords.map((w, i) => {
-    if (status[i] === 'error')    return `<span class="word word-error">${w}</span> `;
-    if (status[i] === 'omission') return `<span class="word word-omission">${w}</span> `;
+  return state.rawWords.map((w,i)=>{
+    if(status[i]==='error')    return `<span class="word word-error">${w}</span> `;
+    if(status[i]==='omission') return `<span class="word word-omission">${w}</span> `;
     return `<span class="word word-correct">${w}</span> `;
   }).join('');
 }
 
 function renderWords(status) {
-  const area = document.getElementById('reading-area');
-  area.innerHTML = (!status || !status.length)
-    ? state.rawWords.map(w => `<span class="word word-correct">${w}</span> `).join('')
-    : annotatedHtml(status);
+  const area=document.getElementById('reading-area');
+  area.innerHTML=(!status||!status.length)
+    ?state.rawWords.map(w=>`<span class="word word-correct">${w}</span> `).join('')
+    :annotatedHtml(status);
+}
+
+// ── Sauvegarde Google Sheets ──────────────────────────────────
+async function saveToSheets() {
+  const el=document.getElementById('sheets-status');
+  el.textContent='⏳ Sauvegarde en cours…';
+  el.style.cssText='background:#dbeafe;color:#1e40af;display:block';
+  const total=state.words.length;
+  const errLines=state.errors.map(e=>`[${e.type==='sub'?'Substitution':'Omission'}] ${e.expected}${e.got?' → '+e.got:''}`).join(' | ');
+  const annotated=state.rawWords.map((w,i)=>{const e=state.errors.find(e=>e.index===i);return e?(e.type==='sub'?`[${w}→${e.got}]`:`[OMIS:${w}]`):w;}).join(' ');
+  try {
+    await fetch(GAS_URL,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        classe:state.classe, studentName:state.student,
+        lang:state.lang, level:state.level, textTitle:state.textTitle,
+        totalWords:total, errorCount:state.errors.length,
+        errorDetails:errLines||'Aucune erreur', annotatedText:annotated
+      })
+    });
+    el.textContent='✓ Rapport sauvegardé dans Google Sheets';
+    el.style.cssText='background:#dcfce7;color:#166534;display:block';
+  } catch {
+    el.textContent='⚠️ Impossible d\'envoyer — vérifiez la connexion réseau.';
+    el.style.cssText='background:#fff7ed;color:#9a3412;display:block';
+  }
+}
+
+// ── Vue Enseignant ────────────────────────────────────────────
+let allLectures = [];
+
+async function openTeacherView() {
+  show('teacher-modal');
+  show('teacher-loading');
+  hide('teacher-error');
+  hide('teacher-table-wrap');
+  try {
+    const resp = await fetch(GAS_URL + '?action=lectures');
+    const data = await resp.json();
+    if (!Array.isArray(data)) throw new Error(data.error || 'Données invalides');
+    allLectures = data;
+    buildTeacherTable(data);
+    populateTeacherFilters(data);
+    hide('teacher-loading');
+    show('teacher-table-wrap');
+  } catch(err) {
+    hide('teacher-loading');
+    const errEl = document.getElementById('teacher-error');
+    errEl.innerHTML = `⚠️ Impossible de charger les données (${err.message}). <a href="https://docs.google.com/spreadsheets/d/16t0tHXOK0iBu-0Inil-8Tez6fDGvpRzZ02t0Irp9UK4/edit" target="_blank" style="color:var(--blue)">Ouvrir directement le Google Sheet</a>.`;
+    show('teacher-error');
+  }
+}
+
+function populateTeacherFilters(data) {
+  const classes  = [...new Set(data.map(r=>r.classe).filter(Boolean))].sort();
+  const students = [...new Set(data.map(r=>r.student).filter(Boolean))].sort();
+  const cf = document.getElementById('teacher-classe-filter');
+  const sf = document.getElementById('teacher-student-filter');
+  cf.innerHTML = '<option value="">Toutes les classes</option>';
+  sf.innerHTML = '<option value="">Tous les élèves</option>';
+  classes.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cf.appendChild(o);});
+  students.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sf.appendChild(o);});
+}
+
+function filterTeacherTable() {
+  const cf = document.getElementById('teacher-classe-filter').value;
+  const sf = document.getElementById('teacher-student-filter').value;
+  const filtered = allLectures.filter(r =>
+    (!cf || r.classe===cf) && (!sf || r.student===sf)
+  );
+  buildTeacherTable(filtered);
+}
+
+function buildTeacherTable(rows) {
+  const tbody = document.getElementById('teacher-tbody');
+  const empty = document.getElementById('teacher-empty');
+  tbody.innerHTML = '';
+  if (!rows.length) { show('teacher-empty'); return; }
+  hide('teacher-empty');
+  rows.forEach(r => {
+    const accNum = parseInt(r.accuracy);
+    const accClass = accNum>=95?'acc-good':accNum>=85?'acc-warn':'acc-bad';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.date}</td><td>${r.classe||'—'}</td><td>${r.student||'—'}</td><td>${r.level||'—'}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.title||'—'}</td><td>${r.words}</td><td>${r.errors}</td><td class="${accClass}">${r.accuracy}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 // ── Copier le rapport ────────────────────────────────────────
 function copyReport() {
-  const total = state.words.length, errCount = state.errors.length;
-  const acc   = total > 0 ? Math.round(((total - errCount) / total) * 100) : 100;
-  const date  = new Date().toLocaleDateString('fr-CH');
-  const errLines = state.errors.map(e =>
-    `  [${e.type === 'sub' ? 'Substitution' : 'Omission'}] ${e.expected}${e.got ? ' → ' + e.got : ''}`
-  ).join('\n');
-  const annotated = state.rawWords.map((w, i) => {
-    const e = state.errors.find(e => e.index === i);
-    return e ? (e.type === 'sub' ? `[${w}→${e.got}]` : `[OMIS:${w}]`) : w;
-  }).join(' ');
-
-  const txt =
-`RAPPORT DE LECTURE — LGB Primaire
-Date       : ${date}
-Élève      : ${state.student || '—'}
-Langue     : ${state.lang === 'fr' ? 'Français' : 'English'}
-Niveau     : ${state.level}
-Texte      : ${state.textTitle}
-
-RÉSULTATS
-Mots total : ${total}
-Erreurs    : ${errCount}
-Précision  : ${acc}%
-Substitut. : ${state.errors.filter(e => e.type === 'sub').length}
-Omissions  : ${state.errors.filter(e => e.type === 'om').length}
-
-DÉTAIL DES ERREURS
-${errLines || '  Aucune erreur'}
-
-TEXTE ANNOTÉ
-${annotated}`;
-
-  navigator.clipboard.writeText(txt).then(() => {
-    document.getElementById('copy-status').textContent = '✓ Copié ! Collez dans Google Docs, Sheets ou un email.';
-    setTimeout(() => document.getElementById('copy-status').textContent = '', 4000);
-  }).catch(() => {
-    document.getElementById('copy-status').textContent = 'Copiez manuellement ci-dessus.';
-  });
+  const total=state.words.length,errCount=state.errors.length;
+  const acc=total>0?Math.round(((total-errCount)/total)*100):100;
+  const date=new Date().toLocaleDateString('fr-CH');
+  const errLines=state.errors.map(e=>`  [${e.type==='sub'?'Substitution':'Omission'}] ${e.expected}${e.got?' → '+e.got:''}`).join('\n');
+  const annotated=state.rawWords.map((w,i)=>{const e=state.errors.find(e=>e.index===i);return e?(e.type==='sub'?`[${w}→${e.got}]`:`[OMIS:${w}]`):w;}).join(' ');
+  const txt=`RAPPORT DE LECTURE — LGB Primaire\nDate       : ${date}\nClasse     : ${state.classe||'—'}\nÉlève      : ${state.student||'—'}\nLangue     : ${state.lang==='fr'?'Français':'English'}\nNiveau     : ${state.level}\nTexte      : ${state.textTitle}\n\nRÉSULTATS\nMots total : ${total}\nErreurs    : ${errCount}\nPrécision  : ${acc}%\nSubstitut. : ${state.errors.filter(e=>e.type==='sub').length}\nOmissions  : ${state.errors.filter(e=>e.type==='om').length}\n\nDÉTAIL DES ERREURS\n${errLines||'  Aucune erreur'}\n\nTEXTE ANNOTÉ\n${annotated}`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    document.getElementById('copy-status').textContent='✓ Copié !';
+    setTimeout(()=>document.getElementById('copy-status').textContent='',4000);
+  }).catch(()=>{ document.getElementById('copy-status').textContent='Copiez manuellement.'; });
 }
 
 // ── Navigation ───────────────────────────────────────────────
@@ -742,7 +766,7 @@ function retrySession() { resetToRecording(); hide('step-report'); show('step-re
 function show(id) { document.getElementById(id).classList.remove('hidden'); }
 function hide(id) { document.getElementById(id).classList.add('hidden'); }
 function normalise(w) {
-  return w.toLowerCase().replace(/['']/g, "'").replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi, '').trim();
+  return w.toLowerCase().replace(/['']/g,"'").replace(/[^a-zàâäéèêëîïôùûüœçæ']/gi,'').trim();
 }
 </script>
 </body>
