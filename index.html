@@ -288,7 +288,7 @@ const LIBRARY = [
 let state = {
   lang:'fr', level:'1A', student:'', textTitle:'', originalText:'',
   words:[], rawWords:[], recognition:null, isRecording:false,
-  fullTranscript:'', errors:[], wordStatus:[]
+  fullTranscript:'', lastInterim:'', errors:[], wordStatus:[]
 };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -382,6 +382,7 @@ function startSession() {
 // ── Enregistrement ───────────────────────────────────────────
 function resetToRecording() {
   state.fullTranscript = '';
+  state.lastInterim = '';
   state.errors = [];
   renderWords([]);
   document.getElementById('live-transcript').textContent = 'En attente du microphone…';
@@ -415,6 +416,7 @@ function startRecording() {
         updateHighlights();
       } else {
         interim = e.results[i][0].transcript;
+        state.lastInterim = interim;
       }
     }
     document.getElementById('live-transcript').textContent =
@@ -448,11 +450,50 @@ function startRecording() {
 
 function stopRecording() {
   state.isRecording = false;
+  // Capture le dernier segment intermédiaire avant l'arrêt (évite l'omission du dernier mot)
+  if (state.lastInterim) {
+    state.fullTranscript += ' ' + state.lastInterim;
+    state.lastInterim = '';
+  }
   if (state.recognition) { state.recognition.stop(); state.recognition = null; }
   document.getElementById('rec-badge').classList.add('hidden');
   document.getElementById('btn-record').disabled   = false;
   document.getElementById('btn-stop-record').disabled = true;
   buildReport();
+}
+
+// ── Normalisation phonétique ──────────────────────────────────
+// Réduit un mot à sa forme phonétique approchée pour comparer les homophones.
+// Ex. FR : "lit" = "lis" = "lie" → "li"  |  "chaud" = "chaux" → "cho"
+function phoneticNorm(w) {
+  if (state.lang === 'en') {
+    // Anglais : simplification minimale des voyelles finales silencieuses
+    return w.replace(/e$/, '').replace(/(.)\1/g, '$1');
+  }
+  // Français
+  return w
+    .replace(/eau|au/g, 'o')
+    .replace(/ai|ei|ê/g, 'è')
+    .replace(/ez$|er$/, 'é')
+    .replace(/ou/g, 'u')
+    .replace(/oi/g, 'oa')
+    .replace(/eu|œu|œ/g, 'e')
+    .replace(/ph/g, 'f')
+    .replace(/qu/g, 'k')
+    .replace(/c(?=[eèéêëiy])/g, 's')
+    .replace(/g(?=[eèéêëiy])/g, 'j')
+    .replace(/ç/g, 's')
+    .replace(/[àâ]/g, 'a')
+    .replace(/[éèêë]/g, 'e')
+    .replace(/[îï]/g, 'i')
+    .replace(/[ôö]/g, 'o')
+    .replace(/[ùûü]/g, 'u')
+    .replace(/an|am|en|em/g, 'an')
+    .replace(/ain|ein|ien|in|im/g, 'in')
+    .replace(/on|om/g, 'on')
+    .replace(/un|um/g, 'un')
+    .replace(/ent$/, '')       // -ent verbal muet
+    .replace(/[stdxz]$/, ''); // consonnes finales muettes
 }
 
 // ── Alignement Levenshtein ────────────────────────────────────
@@ -463,13 +504,16 @@ function align(expected, spoken) {
   for (let i=1;i<=n;i++) dp[i][0]=i*DEL;
   for (let j=1;j<=m;j++) dp[0][j]=j*INS;
   for (let i=1;i<=n;i++) for (let j=1;j<=m;j++) {
-    const ok = expected[i-1]===spoken[j-1];
+    // Considère homophones comme identiques
+    const ok = expected[i-1]===spoken[j-1] ||
+               phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
     dp[i][j]=Math.min(dp[i-1][j-1]+(ok?0:SUB), dp[i-1][j]+DEL, dp[i][j-1]+INS);
   }
   const ops=[]; let i=n, j=m;
   while (i>0||j>0) {
     if (i>0&&j>0) {
-      const ok=expected[i-1]===spoken[j-1];
+      const ok=expected[i-1]===spoken[j-1] ||
+               phoneticNorm(expected[i-1])===phoneticNorm(spoken[j-1]);
       if (dp[i][j]===dp[i-1][j-1]+(ok?0:SUB)) { ops.unshift({type:ok?'ok':'sub',exp:expected[i-1],got:spoken[j-1]}); i--;j--;continue; }
     }
     if (i>0&&dp[i][j]===dp[i-1][j]+DEL) { ops.unshift({type:'del',exp:expected[i-1],got:null}); i--; }
